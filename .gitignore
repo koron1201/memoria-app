@@ -1,41 +1,38 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Dependencies
+node_modules/
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+# Build
+.next/
+dist/
+out/
 
-# testing
-/coverage
+# Environment
+.env
+.env.local
+.env.*.local
 
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
+# OS
 .DS_Store
-*.pem
+Thumbs.db
+Desktop.ini
+ehthumbs.db
 
-# debug
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# AI / Cursor 用（チーム共有リポジトリには含めない。必要な人はローカルのみで管理）
+CLAUDE.md
+AGENTS.md
+.cursor/
+
+# Debug
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
+# Vercel
 .vercel
 
-# typescript
+# TypeScript
 *.tsbuildinfo
-next-env.d.ts

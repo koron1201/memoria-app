@@ -1,36 +1,187 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MEMORIA — 写真×AI×感情で「思い出の1ページ」を自動生成するアプリ
 
-## Getting Started
+> 写真とひとことテキストから AI が感情を解析し、日記を自動生成。  
+> 感情は動物キャラクターとして可視化され、夢はロードマップに変わる。  
+> ハッカソン期間（2026年4月16日〜4月29日）に MVP を完成させるプロジェクト。
 
-First, run the development server:
+---
+
+## 技術スタック
+
+| 区分 | 技術 |
+|------|------|
+| **フロントエンド** | Next.js 16 (App Router) / React 19 / TypeScript / Tailwind CSS v4 / shadcn/ui / Framer Motion |
+| **バックエンド** | Supabase (PostgreSQL / Auth / Storage) / Gemini API |
+| **デプロイ** | Vercel |
+
+---
+
+## セットアップ
+
+### 前提条件
+
+- Node.js 20+
+- npm or pnpm
+- Supabase プロジェクト（Auth / DB / Storage）
+- Gemini API キー
+
+### Step 1: リポジトリクローン
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd memoria-app
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Step 2: フロントエンド
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cd frontend
+npm install
+cp .env.example .env.local  # 環境変数を設定
+npm run dev                  # http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Step 3: バックエンド
 
-## Learn More
+```bash
+cd backend
+npm install
+cp .env.example .env.local
+npm run dev                  # http://localhost:3001
+```
 
-To learn more about Next.js, take a look at the following resources:
+### 環境変数（一覧）
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- ルートの **`.env.example`** にフロント・バックエンドのキーをコメント付きで列挙（値は書かない）。
+- 実際の設定は **`frontend/.env.example`** / **`backend/.env.example`** をコピーして各 `frontend/.env.local` と `backend/.env.local` に記入する。
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```env
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
-## Deploy on Vercel
+# Gemini API
+GEMINI_API_KEY=your-gemini-api-key
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## CI
+
+GitHub Actions（`.github/workflows/ci.yml`）で `frontend` / `backend` の lint と build を実行する。
+
+---
+
+## アーキテクチャ
+
+概要のみ **`docs/ARCHITECTURE.md`**。仕様の正は `docs/01`〜`05`。
+
+---
+
+## ディレクトリ構成
+
+```
+memoria-app/
+├── frontend/                  # フロントエンド（Next.js）
+│   ├── src/
+│   │   ├── app/               # App Router ページ
+│   │   │   ├── page.tsx       # ホーム（/）
+│   │   │   ├── onboarding/    # オンボーディング
+│   │   │   ├── upload/        # 写真アップロード
+│   │   │   ├── memory/[id]/   # 思い出の1ページ
+│   │   │   ├── animal-card/[id]/ # 動物カード詳細
+│   │   │   ├── tanzaku/       # 短冊入力
+│   │   │   ├── roadmap/[id]/  # ロードマップ
+│   │   │   └── profile/       # プロフィール
+│   │   ├── components/        # UIコンポーネント
+│   │   │   ├── ui/            # shadcn/ui ベースコンポーネント
+│   │   │   ├── avatar.tsx
+│   │   │   ├── bottom-nav.tsx
+│   │   │   ├── glass-card.tsx
+│   │   │   └── page-header.tsx
+│   │   └── lib/               # ユーティリティ
+│   │       ├── utils.ts
+│   │       └── motion.ts      # Framer Motion 共通定数
+│   ├── public/                # 静的アセット
+│   ├── package.json
+│   └── next.config.ts
+│
+├── backend/                   # バックエンド（API・ビジネスロジック）
+│   ├── src/
+│   │   ├── routes/            # APIルートハンドラー
+│   │   ├── services/          # ビジネスロジック（AI解析・感情分析）
+│   │   ├── db/                # データベーススキーマ・クエリ
+│   │   └── lib/               # ユーティリティ（Supabase クライアント等）
+│   └── package.json
+│
+├── docs/                      # 上流設計ドキュメント
+│   ├── 01_user-persona.md
+│   ├── 02_user-story-map.md
+│   ├── 03_screen-architecture.md
+│   ├── 04_implementation-timeline.md
+│   └── 05_design-direction.md
+│
+├── .env.example               # 環境変数キー一覧（ルート参照用）
+├── .github/workflows/ci.yml   # CI（lint / build）
+└── README.md                  # このファイル
+```
+
+---
+
+## コア機能
+
+### 1. MEMORIA（思い出の記録）
+
+写真 + ひとことテキスト → AI 感情解析 → 「思い出の1ページ」自動生成
+
+### 2. 動物キャラクター（感情の可視化）
+
+| 感情状態 | 動物 | キャッチコピー |
+|----------|------|---------------|
+| 自由っぽい | 🐱 ネコ | 気まぐれに世界を歩く |
+| 寂しい・不安 | 🐰 ウサギ | そっと寄り添う、繊細な心 |
+| 元気・活発 | 🦁 ライオン | 太陽のように輝く情熱 |
+| 穏やか・安定 | 🐻 クマ | どっしり構えた安心感 |
+| 好奇心旺盛 | 🦊 キツネ | 知りたがりの探究者 |
+
+### 3. 短冊ドリームロード（夢のロードマップ）
+
+短冊に夢を書く → AI がスモールステップに分解 → ロードマップ生成
+
+---
+
+## チーム役割分担
+
+**ハッカソン期間**: 2026年4月16日〜2026年4月29日（全14日間）
+
+| メンバー | 主担当 | 担当領域 |
+|----------|--------|----------|
+| **A** | フロントエンド | ホーム / アップロード / 日記ビュー / 動物カード |
+| **B** | バックエンド | API / Supabase / AI連携 |
+| **C** | フロントエンド補助 + デザイン | オンボーディング / 短冊 / ロードマップ / プロフィール |
+
+---
+
+## 設計ドキュメント
+
+| ドキュメント | 内容 |
+|-------------|------|
+| `docs/01_user-persona.md` | ターゲットユーザー（大学2年生 佐藤ゆい） |
+| `docs/02_user-story-map.md` | 全ストーリー一覧（Must 15本 / Should 9本 / Could 4本） |
+| `docs/03_screen-architecture.md` | 画面遷移図 & 8画面の情報設計 |
+| `docs/04_implementation-timeline.md` | ハッカソン期間のタイムライン・役割分担 |
+| `docs/05_design-direction.md` | カラーパレット・タイポグラフィ・Glassmorphism 方針 |
+| `docs/ARCHITECTURE.md` | フロント・バック・Supabase・Gemini の短い構成メモ |
+
+---
+
+## デザイントーン
+
+> **やわらかい** / **透明感** / **温かみ** / **夢心地** / **ミニマル**
+
+| カラー | HEX | 用途 |
+|--------|-----|------|
+| Lavender Dream | `#B8A9E8` | プライマリ |
+| Soft Rose | `#F2B5D4` | セカンダリ |
+| Ocean Mist | `#89CFF0` | ターシャリ |

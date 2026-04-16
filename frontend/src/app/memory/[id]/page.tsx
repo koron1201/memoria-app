@@ -14,7 +14,7 @@ export default function MemoryPage() {
 
       <div className="flex flex-col items-center gap-5 px-5 pt-6">
         {/* 日付ヘッダー */}
-        <p className="text-sm text-muted-foreground">2026年4月15日</p>
+        <p className="text-sm text-muted-foreground">2026年4月20日</p>
 
         {/* メイン写真 */}
         <div className="aspect-[4/3] w-full max-w-sm overflow-hidden rounded-2xl bg-gradient-to-br from-[#B8A9E8]/20 to-[#F2B5D4]/20">

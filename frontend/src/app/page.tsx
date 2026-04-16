@@ -4,7 +4,6 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Avatar } from "@/components/avatar";
 import { GlassCard } from "@/components/glass-card";
-import { Button } from "@/components/ui/button";
 import { pageTransition, cardStagger } from "@/lib/motion";
 
 const recentMemories = [

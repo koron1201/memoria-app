@@ -1,0 +1,24 @@
+{
+  "name": "memoria-backend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.14",
+    "@supabase/supabase-js": "^2.49.0",
+    "hono": "^4.7.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^20",
+    "eslint": "^10.2.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5",
+    "typescript-eslint": "^8.58.2"
+  }
+}
