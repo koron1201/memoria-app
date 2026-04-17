@@ -200,3 +200,9 @@ memoria-app/
 - リモートをまだ登録していない場合: `git remote add origin <リポジトリURL>` のあと上記 3〜5。
 - 他の人の変更を取り込む場合: `push` の前に `git pull`（必要ならコンフリクト解消）。
 - Windows で **`nul` という名前のファイル**があると `git add` が失敗することがある（予約名のため）。その場合は先に削除してから `git add`。
+
+7. **ブランチ(dev/main)から分岐する**
+- git fetch origin
+- git checkout dev
+- git pull origin dev(dev/mainを最新状態にするため)
+- git checkout -b your-branch-name
