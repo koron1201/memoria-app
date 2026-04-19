@@ -1,0 +1,13 @@
+FROM node:20-slim
+
+WORKDIR /app
+
+# 依存関係を先にインストール（高速化のため）
+COPY package*.json ./
+RUN npm install
+
+# 残りのファイルをコピー
+COPY . .
+
+# 開発用サーバーを起動
+CMD ["npm", "run", "dev"]
