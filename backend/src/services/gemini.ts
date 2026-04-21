@@ -63,9 +63,10 @@ export async function analyzeMemory(imageBuffer: Buffer, userText: string, mimeT
   try {
     const result = await model.generateContent([prompt, imagePart]);
     const response = result.response;
-    return JSON.parse(response.text()); // 文字列で返ってきたJSONをオブジェクトに変換
+    return JSON.parse(response.text());
   } catch (error) {
     console.error("Gemini Analysis Error:", error);
-    throw new Error("AI解析に失敗しました");
+    // 【修正】 cause: error を追加して、元のエラー情報を保持する
+    throw new Error("AI解析に失敗しました", { cause: error });
   }
 }
