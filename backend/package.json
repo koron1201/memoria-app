@@ -9,9 +9,12 @@
     "lint": "eslint src/"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@hono/node-server": "^1.19.14",
     "@supabase/supabase-js": "^2.49.0",
-    "hono": "^4.7.0"
+    "cors": "^2.8.6",
+    "hono": "^4.7.0",
+    "multer": "^2.1.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

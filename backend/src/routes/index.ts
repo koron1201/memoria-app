@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { healthRoute } from "./health-route";
+import analyzeRouter from './analyze';
 
 export function createApp(): Hono {
   const app = new Hono();
@@ -9,6 +10,8 @@ export function createApp(): Hono {
   app.use("/*", cors({ origin: corsOrigin }));
 
   app.route("/health", healthRoute);
+
+  app.route('/api/analyze', analyzeRouter);
 
   return app;
 }
