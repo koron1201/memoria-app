@@ -14,8 +14,8 @@ router.post('/', async (c) => {
     const imageFile = body['image'];
     const userText = (body['text'] as string) || "";
 
-    // 画像が File オブジェクトかチェック
-    if (!(imageFile instanceof File)) {
+    // 画像が File オブジェクトかチェック（instanceof File で型を絞り込む）
+    if (!imageFile || !(imageFile instanceof File)) {
       return c.json({ error: "画像を選択してください" }, 400);
     }
 
@@ -31,7 +31,8 @@ router.post('/', async (c) => {
     );
 
     return c.json(result);
-  } catch (error: any) {
+  } catch (error) {
+    // 【修正】 error: any をやめて、安全なログ出力にする
     console.error("Analysis Route Error:", error);
     return c.json({ error: "AI解析中にエラーが発生しました" }, 500);
   }
