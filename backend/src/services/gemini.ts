@@ -28,9 +28,8 @@ const schema = {
  * 画像とテキストをGeminiに送り、解析結果を返す関数
  */
 export async function analyzeMemory(imageBuffer: Buffer, userText: string, mimeType: string) {
-  // 高速で安価な 1.5 Flash モデルを使用
   const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
+    model: "gemini-2.5-flash-lite",
     generationConfig: {
       responseMimeType: "application/json",
       responseSchema: schema,
@@ -46,18 +45,17 @@ export async function analyzeMemory(imageBuffer: Buffer, userText: string, mimeT
   };
 
   const prompt = `
-    あなたは、ユーザーの「思い出」からその人の「心の状態（MBTI的側面）」を読み解き、動物に例える専門家です。
-    ユーザーの投稿した写真の雰囲気と、メッセージ「${userText}」を深く分析し、以下の基準で最も近い動物（animalId）を決定してください。
+    あなたはユーザーの思い出を鮮やかに言語化し、その深層心理を動物に例える専門家です。
+    写真の雰囲気とメッセージ「${userText}」から、以下の3点を抽出してください。
 
-    【動物判定のアルゴリズム（MBTIリファレンス）】
-    - lion: 外向的(E)、活発、情熱的。主役として場を楽しんでいる。
-    - rabbit: 内向的(I)、繊細、思慮深い。静かな感動や、一人の時間を大切にしている。
-    - cat: 自由、直感的(N)、マイペース。枠にとらわれず、その瞬間の感性を楽しんでいる。
-    - bear: 穏やか、現実的(S)、安定感。日常の幸せや、確かな繋がりを感じている。
-    - fox: 好奇心、論理的(T)または探索的(P)。新しい発見や、知的な刺激を楽しんでいる。
+    1. **diaryText (200文字程度)**:
+       ユーザー本人の一人称（私、僕など）で、その瞬間の空気感や色彩、隠れた感情を綴ったエモい日記を書いてください。
+    2. **animalId**:
+       性格特性から以下より1つ選択（lion:情熱, rabbit:繊細, cat:自由, bear:穏やか, fox:好奇心）。
+    3. **emotion**:
+       その時の気分を「ワクワク」「しっとり」など一言で。
 
-    分析結果に基づき、指定されたJSON形式で出力してください。
-    特に 'diaryText' は、単なる事実の羅列ではなく、その動物の性格が表れているような、本人も気づいていない感情を言語化するエモい文章にしてください。
+    必ず指定されたJSON形式で出力してください。
   `;
 
   try {
