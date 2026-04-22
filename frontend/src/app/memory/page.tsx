@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image"; // <img>をNext.js最適化版に変更!
+import Image from "next/image"; // <img>から変更
 import { motion } from "framer-motion";
 import { PageHeader } from "@/components/page-header";
 import { GlassCard } from "@/components/glass-card";
 import { Button } from "@/components/ui/button";
 import { pageTransition } from "@/lib/motion";
 
-// 型を定義して any を回避
+// 型を定義して any を排除
 interface AnalysisData {
   emotion: string;
   animalId: string;
@@ -25,7 +25,6 @@ const ANIMAL_MAP: Record<string, { label: string; icon: string; color: string }>
 };
 
 export default function MemoryPage() {
-  // anyを回避し、型を指定
   const [data, setData] = useState<AnalysisData | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
@@ -33,14 +32,17 @@ export default function MemoryPage() {
     const savedAnalysis = localStorage.getItem("last_analysis");
     const savedImage = localStorage.getItem("last_image");
 
-    if (savedAnalysis) {
-      try {
-        setData(JSON.parse(savedAnalysis));
-      } catch (e) {
-        console.error("Failed to parse analysis data", e);
+    // 更新を次のフレームに逃がして Cascading Renders 警告を回避
+    window.requestAnimationFrame(() => {
+      if (savedAnalysis) {
+        try {
+          setData(JSON.parse(savedAnalysis));
+        } catch (e) {
+          console.error("Failed to parse analysis data", e);
+        }
       }
-    }
-    if (savedImage) setImageUrl(savedImage);
+      if (savedImage) setImageUrl(savedImage);
+    });
   }, []);
 
   if (!data) return <div className="p-10 text-center">思い出を読み込み中...</div>;
@@ -56,15 +58,15 @@ export default function MemoryPage() {
           {new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })}
         </p>
 
+        {/*  next/image を使用して最適化 */}
         <div className="relative aspect-[4/3] w-full max-w-sm overflow-hidden rounded-2xl bg-gradient-to-br from-[#B8A9E8]/20 to-[#F2B5D4]/20">
           {imageUrl ? (
-            // <img> を <Image /> に変更（Next.jsの警告対応）
-            <Image 
-              src={imageUrl} 
-              alt="Memory" 
-              fill 
+            <Image
+              src={imageUrl}
+              alt="Memory"
+              fill
               className="object-cover"
-              unoptimized // localStorageのblob/dataURLを表示する場合はこれが必要
+              unoptimized // localStorageのblobを表示するために必要
             />
           ) : (
             <div className="flex h-full items-center justify-center text-4xl">📷</div>
@@ -87,7 +89,11 @@ export default function MemoryPage() {
         </div>
 
         <Link href={`/animal-card/${data.animalId}`} className="w-full max-w-sm">
-          <Button variant="outline" className="h-11 w-full rounded-2xl border-[#B8A9E8]/30 text-sm" size="lg">
+          <Button
+            variant="outline"
+            className="h-11 w-full rounded-2xl border-[#B8A9E8]/30 text-sm"
+            size="lg"
+          >
             {animalConfig.icon} 今日の動物カードを見る
           </Button>
         </Link>
