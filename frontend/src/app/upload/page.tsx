@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { PageHeader } from "@/components/page-header";
@@ -87,12 +88,15 @@ export default function UploadPage() {
           }`}
         >
           {previewUrl ? (
-            /* 写真を選択済みの時：画像を表示 */
-            <img 
-              src={previewUrl} 
-              alt="Preview" 
-              className="h-full w-full object-cover" 
-            />
+            <div className="relative h-full w-full min-h-48">
+              <Image
+                src={previewUrl}
+                alt="プレビュー"
+                fill
+                className="object-cover"
+                unoptimized
+              />
+            </div>
           ) : (
             /* 写真が未選択の時：いつものアイコンを表示 */
             <>

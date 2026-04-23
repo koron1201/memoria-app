@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AppHeader } from "@/components/app-header";
 import { GlassCard } from "@/components/glass-card";
@@ -68,11 +68,7 @@ export default function Home() {
   );
   const [actionTick, setActionTick] = useState(0);
   const [tapped, setTapped] = useState(false);
-  const [today, setToday] = useState("");
-
-  useEffect(() => {
-    setToday(formatToday());
-  }, []);
+  const [today] = useState(() => formatToday());
 
   const heroMemory = useMemo(
     () => recentMemories.find((m) => m.id === heroMemoryId) ?? null,
