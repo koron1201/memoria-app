@@ -172,7 +172,7 @@ memories (
   input_text TEXT,        -- ユーザー入力テキスト
   diary_text TEXT,        -- AI生成日記
   emotion JSONB,          -- {type: "cat", score: 0.85, tags: ["自由", "好奇心"]}
-  animal_type TEXT,       -- cat / rabbit / lion / bear / fox
+  animal_type TEXT,       -- cat / rabbit / bear / fox / ...
   created_at TIMESTAMPTZ
 )
 
