@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
+import { AppBackground } from "@/components/app-background";
 import { BottomNav } from "@/components/bottom-nav";
 
 const inter = Inter({
@@ -22,7 +23,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
 };
 
 export default function RootLayout({
@@ -39,7 +39,16 @@ export default function RootLayout({
         className="min-h-full flex flex-col"
         style={{ fontFamily: '"Noto Sans JP", "Inter", system-ui, sans-serif' }}
       >
-        <main className="flex-1 pb-20">{children}</main>
+        <AppBackground />
+        <main
+          className="flex-1"
+          style={{
+            paddingBottom:
+              "calc(var(--nav-height) + var(--nav-float-inset) + env(safe-area-inset-bottom) + 0.5rem)",
+          }}
+        >
+          {children}
+        </main>
         <BottomNav />
       </body>
     </html>
