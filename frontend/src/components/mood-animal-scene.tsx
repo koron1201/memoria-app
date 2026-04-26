@@ -169,7 +169,7 @@ interface MoodAnimalSceneProps {
 
 export function MoodAnimalScene({
   src,
-  accent = "#B8A9E8",
+  accent = "#6B8F7A",
   className = "h-72 w-72",
   actionTick,
   onInteract,

@@ -29,7 +29,7 @@ const schema = {
  */
 export async function analyzeMemory(imageBuffer: Buffer, userText: string, mimeType: string) {
   const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-flash-lite",
+    model: "gemini-2.5-flash",
     generationConfig: {
       responseMimeType: "application/json",
       responseSchema: schema,
@@ -45,17 +45,18 @@ export async function analyzeMemory(imageBuffer: Buffer, userText: string, mimeT
   };
 
   const prompt = `
-    あなたはユーザーの思い出を鮮やかに言語化し、その深層心理を動物に例える専門家です。
-    写真の雰囲気とメッセージ「${userText}」から、以下の3点を抽出してください。
+    あなたは、写真と短いメモから「その時、本人が心の奥で感じていたはずの言葉」を紡ぎ出す詩人です。
+    
+    【入力】
+    ・写真の画像データ
+    ・ユーザーの短いメモ: 「${userText}」
 
-    1. **diaryText (200文字程度)**:
-       ユーザー本人の一人称（私、僕など）で、その瞬間の空気感や色彩、隠れた感情を綴ったエモい日記を書いてください。
-    2. **animalId**:
-       性格特性から以下より1つ選択（lion:情熱, rabbit:繊細, cat:自由, bear:穏やか, fox:好奇心）。
-    3. **emotion**:
-       その時の気分を「ワクワク」「しっとり」など一言で。
+    【あなたの任務】
+    1. ユーザーのメモを「素材」として使い、200文字程度の【全く新しい日記】を一人称（私、僕など）で創作してください。
+    2. ユーザーのメモをそのまま出力することは厳禁です。必ずあなたの言葉でエモく膨らませてください。
+    3. 写真の色彩や雰囲気から、隠れた感情を読み取って文章に反映させてください。
 
-    必ず指定されたJSON形式で出力してください。
+    必ず指定されたJSON形式で diaryText フィールドに出力してください。
   `;
 
   try {

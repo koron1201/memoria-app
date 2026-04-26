@@ -25,7 +25,7 @@ export const MOODS: MoodDef[] = [
     description:
       "気まぐれに、でも確かに自分のリズムで歩く。立ち止まっても進み始めても、世界はあなたのペースで待っている。",
     glb: "/models/animals/cat.glb",
-    accent: "#B8A9E8",
+    accent: "#9BB5A5",
   },
   {
     id: "calm",
@@ -35,7 +35,7 @@ export const MOODS: MoodDef[] = [
     description:
       "大きな背中に、今日の喧騒を預けていい。変わらないものが、ここにはまだ残っている。",
     glb: "/models/animals/bear.glb",
-    accent: "#F2B5D4",
+    accent: "#6B8F7A",
   },
   {
     id: "curious",
@@ -45,7 +45,7 @@ export const MOODS: MoodDef[] = [
     description:
       "小さな違和感も見逃さないまなざし。歩幅は軽く、視線は遠く。次の角には、まだ見ぬ物語。",
     glb: "/models/animals/fox.glb",
-    accent: "#89CFF0",
+    accent: "#C9A87C",
   },
   {
     id: "lonely",
@@ -55,7 +55,7 @@ export const MOODS: MoodDef[] = [
     description:
       "届かない声も、震える手も、夜の静けさはそっと受けとめる。小さな灯りのそばで、ゆっくり息を整えて。",
     glb: "/models/animals/rat.glb",
-    accent: "#B8A9E8",
+    accent: "#C4B59A",
   },
   {
     id: "friendly",
@@ -65,7 +65,7 @@ export const MOODS: MoodDef[] = [
     description:
       "駆け寄る足音と、ただいまの笑顔。隣にいる、それだけで今日は十分に満ちていく。",
     glb: "/models/animals/dog.glb",
-    accent: "#89CFF0",
+    accent: "#D4847A",
   },
   {
     id: "social",
@@ -75,7 +75,7 @@ export const MOODS: MoodDef[] = [
     description:
       "揃った歩幅、連なる背中。ひとりでは得られないあたたかさを、群れの中で見つける。",
     glb: "/models/animals/penguin.glb",
-    accent: "#B8A9E8",
+    accent: "#7A9B8A",
   },
 ];
 

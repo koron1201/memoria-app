@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Noto_Sans_JP } from "next/font/google";
+import { Inter, Noto_Sans_JP, Noto_Serif_JP } from "next/font/google";
 import "./globals.css";
 import { AppBackground } from "@/components/app-background";
 import { BottomNav } from "@/components/bottom-nav";
@@ -15,9 +15,16 @@ const notoSansJP = Noto_Sans_JP({
   weight: ["400", "500", "700"],
 });
 
+const notoSerifJP = Noto_Serif_JP({
+  variable: "--font-noto-serif",
+  subsets: ["latin"],
+  weight: ["600", "700"],
+});
+
 export const metadata: Metadata = {
-  title: "MEMORIA",
-  description: "写真が、思い出の1ページになる",
+  title: "MonoLog",
+  description:
+    "思い出を物語に、感情を相棒に、夢をロードマップに。",
 };
 
 export const viewport: Viewport = {
@@ -33,7 +40,7 @@ export default function RootLayout({
   return (
     <html
       lang="ja"
-      className={`${inter.variable} ${notoSansJP.variable} h-full antialiased`}
+      className={`${inter.variable} ${notoSansJP.variable} ${notoSerifJP.variable} h-full antialiased`}
     >
       <body
         className="min-h-full flex flex-col"
@@ -44,7 +51,7 @@ export default function RootLayout({
           className="flex-1"
           style={{
             paddingBottom:
-              "calc(var(--nav-height) + var(--nav-float-inset) + env(safe-area-inset-bottom) + 0.5rem)",
+              "calc(var(--nav-height) + var(--nav-float-inset) + env(safe-area-inset-bottom) + 1.25rem)",
           }}
         >
           {children}
