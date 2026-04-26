@@ -14,6 +14,7 @@ export function useOnboarding() {
         if (!hasOnboarded) {
             router.replace("/onboarding");
         }
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsChecking(false);
     }, [router]);
 
