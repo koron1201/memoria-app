@@ -20,9 +20,9 @@ export default function AnimalCardPage() {
       <PageHeader title="動物カード" showBack />
 
       <div className="flex flex-col items-center gap-5 px-5 pt-6">
-        <GlassCard className="w-full max-w-sm bg-gradient-to-br from-[#B8A9E8]/10 to-[#F2B5D4]/10 text-center">
+        <GlassCard className="w-full max-w-sm bg-gradient-to-br from-mono-moss/12 to-mono-cream/35 text-center">
           {/* 動物イラスト */}
-          <div className="mx-auto flex size-28 items-center justify-center rounded-3xl bg-gradient-to-br from-[#B8A9E8]/20 to-[#F2B5D4]/20">
+          <div className="mx-auto flex size-28 items-center justify-center rounded-[1.75rem] bg-gradient-to-br from-primary/15 to-mono-sand/25">
             <span className="text-6xl">🐱</span>
           </div>
 
@@ -38,7 +38,7 @@ export default function AnimalCardPage() {
                   {Array.from({ length: 5 }).map((_, i) => (
                     <span
                       key={i}
-                      className={`text-sm ${i < trait.score ? "text-[#FFD700]" : "text-gray-200"}`}
+                      className={`text-sm transition-transform ${i < trait.score ? "text-mono-sand scale-105" : "text-muted-foreground/30"}`}
                     >
                       ★
                     </span>
@@ -58,7 +58,7 @@ export default function AnimalCardPage() {
         </GlassCard>
 
         <Button
-          className="h-12 w-full max-w-sm rounded-2xl bg-[#B8A9E8] text-base font-medium text-white hover:bg-[#a898d8]"
+          className="h-12 w-full max-w-sm rounded-2xl bg-primary text-base font-medium text-primary-foreground shadow-soft hover:bg-primary/90"
           size="lg"
         >
           📤 シェアする

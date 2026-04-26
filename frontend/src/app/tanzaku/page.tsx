@@ -1,90 +1,159 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+
+import { DEFAULT_ROADMAP_HREF } from "@/lib/app-paths";
+import { PAST_TANZAKU_ITEMS } from "@/lib/past-tanzaku";
 import { motion } from "framer-motion";
 import { PageHeader } from "@/components/page-header";
-import { GlassCard } from "@/components/glass-card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { pageTransition, cardStagger } from "@/lib/motion";
+import { pageTransition } from "@/lib/motion";
+import { RouteAtmosphere } from "@/components/route-atmosphere";
 
-const pastTanzaku = [
-  { id: "1", dream: "Webデザイナーになりたい", date: "4月10日" },
-  { id: "2", dream: "毎朝ランニングする習慣をつけたい", date: "4月5日" },
-];
+const MAX_LEN = 40;
+const PAST_COUNT = PAST_TANZAKU_ITEMS.length;
+
+function formatDateJp(ymd: string) {
+  const d = new Date(ymd + "T12:00:00");
+  if (Number.isNaN(d.getTime())) return ymd;
+  return d.toLocaleDateString("ja-JP", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
 
 export default function TanzakuPage() {
-  const [dream, setDream] = useState("");
+  const [dream, setDream] = useState(
+    "自分の言葉で誰かの心を動かせる人になりたい",
+  );
+  const [deadline, setDeadline] = useState("2026-12-31");
+  const dateInputId = "tanzaku-deadline";
 
   return (
-    <motion.div {...pageTransition}>
-      <PageHeader title="短冊ドリームロード" showBack />
+    <>
+      <RouteAtmosphere variant="wishes" />
+      <motion.div {...pageTransition}>
+        <PageHeader
+          title="夢を短冊に書いてみよう"
+          subline="あなたの願いが、未来の一歩になります。"
+          showBack
+        />
 
-      <div className="flex flex-col items-center gap-6 px-5 pt-6">
-        {/* 短冊入力エリア */}
-        <div className="relative w-full max-w-sm">
-          <div className="overflow-hidden rounded-2xl bg-gradient-to-b from-[#FFF8E7] to-[#FFE4C4] p-6 shadow-lg">
-            {/* 短冊の穴 */}
-            <div className="mx-auto mb-4 h-3 w-8 rounded-full bg-[#D4A574]/30" />
+        <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-6 px-5 pt-1 pb-10">
+          <div className="relative w-full py-2">
+            <div
+              className="pointer-events-none absolute left-1/2 top-1/2 h-48 w-64 -translate-x-1/2 -translate-y-1/2 rounded-[100%] bg-[#d4a574]/18 blur-3xl"
+              aria-hidden
+            />
 
-            <div className="flex flex-col items-center gap-4">
-              <p className="text-xs text-[#8B7355]/60">あなたの夢を書いてください</p>
-              <textarea
-                value={dream}
-                onChange={(e) => setDream(e.target.value)}
-                placeholder="Webデザイナーになりたい"
-                rows={3}
-                className="w-full resize-none bg-transparent text-center text-lg font-medium leading-relaxed text-[#5A4A3A] placeholder:text-[#8B7355]/30 focus:outline-none"
-              />
-            </div>
-
-            {/* 期限設定 */}
-            <div className="mt-4 flex items-center justify-center gap-2">
-              <span className="text-xs text-[#8B7355]/60">期限（任意）</span>
-              <Input
-                type="date"
-                className="h-8 w-36 border-[#D4A574]/30 bg-white/50 text-center text-xs"
-              />
+            <div className="relative mx-auto flex w-full max-w-[13.5rem] flex-col items-center">
+              <div
+                className="relative mb-0 flex w-full flex-col items-center"
+                style={{ fontFamily: "var(--font-noto-sans-jp), sans-serif" }}
+              >
+                <div
+                  className="mb-0 flex h-5 w-10 items-end justify-center"
+                  aria-hidden
+                >
+                  <div
+                    className="h-4 w-4 rounded-b-full border border-rose-300/90 border-t-0"
+                    style={{
+                      background:
+                        "linear-gradient(180deg, #fecaca55 0%, #fda4af88 100%)",
+                    }}
+                  />
+                </div>
+                <div
+                  className="relative w-full overflow-hidden rounded-2xl border border-amber-900/8 bg-gradient-to-b from-[#fffcf4] to-[#f0e4d2] px-3 pb-3 pt-3 shadow-elev [box-shadow:inset_0_1px_0_rgba(255,255,255,0.75)]"
+                >
+                  <div className="mx-auto h-1 w-7 rounded-b-full bg-[#8b6b4a]/15" />
+                  <div className="relative mt-3 flex min-h-[15.5rem] w-full items-center justify-center px-1">
+                    <textarea
+                      value={dream}
+                      onChange={(e) =>
+                        setDream(
+                          e.target.value.slice(0, MAX_LEN),
+                        )
+                      }
+                      maxLength={MAX_LEN}
+                      spellCheck={false}
+                      rows={1}
+                      className="tanzaku-vertical-input max-h-full min-h-0 resize-none self-center overflow-y-auto bg-transparent p-0 text-xl font-semibold leading-[2] tracking-wide text-[#3d3730] placeholder:text-[#8b7355]/35 focus:outline-none sm:text-[1.35rem] sm:leading-[2.1]"
+                      placeholder="夢を"
+                    />
+                    <span className="pointer-events-none absolute bottom-1.5 right-1 text-[10px] tabular-nums text-[#8b7355]/70">
+                      {dream.length}/{MAX_LEN}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* 短冊の紐 */}
-          <div className="absolute -top-3 left-1/2 h-6 w-0.5 -translate-x-1/2 bg-[#D4A574]/40" />
+          <div className="w-full">
+            <p className="text-xs font-medium text-foreground/75" id={`${dateInputId}-label`}>
+              期限（任意）
+            </p>
+            <label
+              htmlFor={dateInputId}
+              className="mt-1.5 flex w-full cursor-pointer items-center justify-between gap-2 rounded-2xl border border-mono-ink/10 bg-mono-paper/95 py-2.5 pl-3.5 pr-3 text-left text-sm text-foreground shadow-ambient [box-shadow:inset_0_1px_0_rgba(255,255,255,0.8)]"
+            >
+              <span className="min-w-0 flex-1 tabular-nums">
+                {formatDateJp(deadline)}
+              </span>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                className="shrink-0 text-muted-foreground/75"
+                aria-hidden
+              >
+                <rect x="3" y="4" width="18" height="18" rx="2" />
+                <path d="M8 2v4M16 2v4M3 10h18" />
+              </svg>
+              <input
+                id={dateInputId}
+                type="date"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+                className="sr-only"
+                aria-labelledby={`${dateInputId}-label`}
+              />
+            </label>
+          </div>
+
+          <div className="flex w-full flex-col gap-3">
+            <Button
+              type="button"
+              variant="brand"
+              className="h-12 w-full text-base font-medium"
+              size="lg"
+              disabled={!dream.trim()}
+            >
+              短冊を送る
+            </Button>
+            <div className="flex w-full flex-col gap-2.5 text-center text-sm">
+              <Link
+                href={DEFAULT_ROADMAP_HREF}
+                className="text-primary/95 font-medium underline-offset-2 hover:underline"
+              >
+                ロードマップを見る
+              </Link>
+              <Link
+                href="/tanzaku/past"
+                className="text-primary/80 underline-offset-2 hover:underline"
+              >
+                過去の短冊を見る（{PAST_COUNT}枚）
+              </Link>
+            </div>
+          </div>
         </div>
-
-        <Button
-          className="h-12 w-full max-w-sm rounded-2xl bg-[#B8A9E8] text-base font-medium text-white hover:bg-[#a898d8] disabled:opacity-40"
-          disabled={!dream.trim()}
-        >
-          ✨ ロードマップを作る
-        </Button>
-
-        {/* 過去の短冊一覧 */}
-        <section className="w-full max-w-sm">
-          <h2 className="mb-3 text-base font-medium">過去の短冊</h2>
-          <motion.div
-            className="flex flex-col gap-2.5"
-            initial="initial"
-            animate="animate"
-            variants={cardStagger.container}
-          >
-            {pastTanzaku.map((item) => (
-              <motion.div key={item.id} variants={cardStagger.item}>
-                <GlassCard className="flex items-center gap-4 bg-gradient-to-r from-[#FFF8E7]/60 to-[#FFE4C4]/40 p-4">
-                  <span className="text-xl">🎋</span>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{item.dream}</p>
-                    <p className="text-xs text-muted-foreground">{item.date}</p>
-                  </div>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-muted-foreground">
-                    <path d="M9 18l6-6-6-6" />
-                  </svg>
-                </GlassCard>
-              </motion.div>
-            ))}
-          </motion.div>
-        </section>
-      </div>
-    </motion.div>
+      </motion.div>
+    </>
   );
 }
