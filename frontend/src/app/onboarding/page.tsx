@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { transitions } from "@/lib/motion";
 import { RouteAtmosphere } from "@/components/route-atmosphere";
 
+const ONBOARDED_KEY = "app_onboarded";
+
 const slides: {
   step: number;
   titleLines: [string, string];
@@ -42,9 +44,14 @@ export default function OnboardingPage() {
   const router = useRouter();
   const isLast = current === slides.length - 1;
 
+  const markAndGo = () => {
+    localStorage.setItem(ONBOARDED_KEY, "true");
+    router.push("/");
+  };
+
   const handleNext = () => {
     if (isLast) {
-      router.push("/");
+      markAndGo();
     } else {
       setCurrent((prev) => prev + 1);
     }
@@ -59,7 +66,7 @@ export default function OnboardingPage() {
         <header className="relative z-10 flex justify-end px-5 pt-safe">
           <button
             type="button"
-            onClick={() => router.push("/")}
+            onClick={markAndGo}
             className="rounded-full px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             スキップ

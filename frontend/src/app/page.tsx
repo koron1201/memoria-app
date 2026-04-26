@@ -17,6 +17,7 @@ import type { SampleMemory } from "@/lib/sample-memories";
 import { SAMPLE_MEMORIES } from "@/lib/sample-memories";
 import { cardStagger, pageTransition, transitions } from "@/lib/motion";
 import { cn } from "@/lib/utils";
+import { useOnboarding } from "./hooks/useOnboarding";
 
 const EMOTION_CHIP: Record<
   AnimalId,
@@ -103,6 +104,11 @@ function FeaturedStory({ memory, tags }: { memory: Memory; tags: string[] }) {
 }
 
 export default function Home() {
+  const { isChecking } = useOnboarding();
+  if (isChecking) {
+    return null;
+  }
+
   const reduceMotion = useReducedMotion();
   // 主役決定用のメモリーID（既定: 最新 = recentMemories[0]）
   const [heroMemoryId, setHeroMemoryId] = useState<string | null>(
