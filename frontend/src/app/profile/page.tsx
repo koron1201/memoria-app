@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
 import { Avatar } from "@/components/avatar";
@@ -23,6 +24,7 @@ function maskEmail(email: string | null): string {
 }
 
 export default function ProfilePage() {
+  const router = useRouter();
   const reduced = useReducedMotion();
   const {
     profile,
@@ -30,6 +32,7 @@ export default function ProfilePage() {
     updateProfile,
     updateNotifications,
     clearLocal,
+    logOut,
   } = useProfile();
   const [editing, setEditing] = useState(false);
   const [draftName, setDraftName] = useState("");
@@ -291,6 +294,17 @@ export default function ProfilePage() {
         <motion.div variants={itemVariants} className="mt-14">
           <button
             type="button"
+            onClick={() => {
+              if (
+                !window.confirm(
+                  "ログアウトすると、この端末に保存した表示名・通知・アバター、案内の完了状態、分析の一時データが消去されます。よろしいですか？",
+                )
+              ) {
+                return;
+              }
+              logOut();
+              router.replace("/onboarding");
+            }}
             className="block w-full rounded-2xl bg-white/45 py-3.5 text-sm font-medium text-[#FF6B6B] ring-1 ring-[#FF6B6B]/22 backdrop-blur-md transition-all hover:bg-[#FF6B6B]/10 hover:ring-[#FF6B6B]/35 active:translate-y-px"
             style={{
               boxShadow:
@@ -300,7 +314,7 @@ export default function ProfilePage() {
             ログアウト
           </button>
           <p className="mt-3 text-center text-[11px] leading-relaxed text-muted-foreground/85">
-            ゲストモードで利用中。ログアウトしても端末上のデータは保持されます。
+            端末内の表示名・通知などを消去し、案内（オンボーディング）から最初に戻ります。サーバーアカウントは未接続のため、連携時は別途サインアウト操作が必要になる場合があります。
           </p>
         </motion.div>
       </motion.div>

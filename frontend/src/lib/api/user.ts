@@ -6,6 +6,8 @@
  * fetch ラッパへ差し替えられる形にしてある。
  */
 
+import { APP_LS, clearEntireClientAppState } from "@/lib/app-local-storage";
+
 export interface UserProfile {
   displayName: string;
   email: string | null;
@@ -19,8 +21,8 @@ export interface NotificationPrefs {
   email: boolean;
 }
 
-const PROFILE_KEY = "memoria.profile.v1";
-const NOTIF_KEY = "memoria.notifications.v1";
+const PROFILE_KEY = APP_LS.profile;
+const NOTIF_KEY = APP_LS.notifications;
 
 export const defaultProfile: UserProfile = {
   displayName: "ゲストユーザー",
@@ -120,5 +122,11 @@ export const userApi = {
     } catch {
       // ignore
     }
+  },
+  /**
+   * ログアウト用：オンボーディング完了フラグ・プロフィール・通知・アップロード一時データを消去
+   */
+  signOutClient(): void {
+    clearEntireClientAppState();
   },
 };

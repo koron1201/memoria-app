@@ -1,9 +1,8 @@
 "use client"
 
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
-const ONBOARDED_KEY = "app_onboarded";
+import { ONBOARDED_KEY } from "@/lib/app-local-storage";
 
 export function useOnboarding() {
     const router = useRouter();

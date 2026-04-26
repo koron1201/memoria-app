@@ -7,8 +7,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { transitions } from "@/lib/motion";
 import { RouteAtmosphere } from "@/components/route-atmosphere";
-
-const ONBOARDED_KEY = "app_onboarded";
+import { ONBOARDED_KEY } from "@/lib/app-local-storage";
 
 const slides: {
   step: number;

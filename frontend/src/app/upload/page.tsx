@@ -9,6 +9,7 @@ import { GlassCard } from "@/components/glass-card";
 import { Button } from "@/components/ui/button";
 import { pageTransition, transitions } from "@/lib/motion";
 import { RouteAtmosphere } from "@/components/route-atmosphere";
+import { APP_LS } from "@/lib/app-local-storage";
 import { cn } from "@/lib/utils";
 
 const ANALYSIS_STEPS = ["写真解析", "感情分析", "文章理解", "動物選定"] as const;
@@ -83,8 +84,8 @@ export default function UploadPage() {
 
       const result = await res.json();
 
-      localStorage.setItem("last_analysis", JSON.stringify(result));
-      if (previewUrl) localStorage.setItem("last_image", previewUrl);
+      localStorage.setItem(APP_LS.lastAnalysis, JSON.stringify(result));
+      if (previewUrl) localStorage.setItem(APP_LS.lastImage, previewUrl);
 
       router.push("/memory/1");
     } catch (error) {

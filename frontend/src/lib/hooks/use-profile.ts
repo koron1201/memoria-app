@@ -53,6 +53,12 @@ export function useProfile() {
     setNotifications(n);
   }, []);
 
+  const logOut = useCallback(() => {
+    userApi.signOutClient();
+    setProfile(defaultProfile);
+    setNotifications(defaultNotifications);
+  }, []);
+
   return {
     profile,
     notifications,
@@ -60,5 +66,6 @@ export function useProfile() {
     updateProfile,
     updateNotifications,
     clearLocal,
+    logOut,
   };
 }
