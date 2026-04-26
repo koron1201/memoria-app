@@ -1,8 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { AppHeader } from "@/components/app-header";
 import { GlassCard } from "@/components/glass-card";
 import { MoodAnimal } from "@/components/mood-animal";
@@ -12,41 +13,26 @@ import {
   getAnimal,
   type AnimalId,
 } from "@/lib/mood";
+import type { SampleMemory } from "@/lib/sample-memories";
+import { SAMPLE_MEMORIES } from "@/lib/sample-memories";
 import { cardStagger, pageTransition, transitions } from "@/lib/motion";
+import { cn } from "@/lib/utils";
 
-interface Memory {
-  id: string;
-  date: string;
-  animalId: AnimalId;
-  preview: string;
-}
+const EMOTION_CHIP: Record<
+  AnimalId,
+  { label: string; chip: "chip-moss" | "chip-sage" | "chip-sand" | "chip-blush" | "chip-linen" }
+> = {
+  free: { label: "喜び", chip: "chip-moss" },
+  calm: { label: "落ち着き", chip: "chip-sage" },
+  curious: { label: "探究", chip: "chip-sand" },
+  lonely: { label: "そっと", chip: "chip-linen" },
+  friendly: { label: "つながり", chip: "chip-blush" },
+  social: { label: "ふれあい", chip: "chip-moss" },
+};
 
-const recentMemories: Memory[] = [
-  {
-    id: "1",
-    date: "4月15日",
-    animalId: "free",
-    preview: "公園で出会った猫と過ごした午後。風が気持ちよかった。",
-  },
-  {
-    id: "2",
-    date: "4月14日",
-    animalId: "calm",
-    preview: "本を読みながら、静かに一杯のコーヒー。窓越しの光が柔らかかった。",
-  },
-  {
-    id: "3",
-    date: "4月13日",
-    animalId: "curious",
-    preview: "気になっていた路地裏のカフェを探検。新しい香りに出会った。",
-  },
-  {
-    id: "4",
-    date: "4月11日",
-    animalId: "friendly",
-    preview: "駅前で偶然の再会。短い立ち話でも心があたたまった。",
-  },
-];
+type Memory = SampleMemory;
+
+const recentMemories: Memory[] = SAMPLE_MEMORIES;
 
 function formatToday() {
   const d = new Date();
@@ -54,10 +40,70 @@ function formatToday() {
   return `${d.getMonth() + 1}月${d.getDate()}日 · ${week}曜日`;
 }
 
-// TODO: 思い出一覧ルート（/memory or /memories）が確定したら差し替える
-const ALL_MEMORIES_HREF = "/profile";
+const ALL_MEMORIES_HREF = "/memory";
+
+function FeaturedStory({ memory, tags }: { memory: Memory; tags: string[] }) {
+  const animal = getAnimal(memory.animalId);
+  return (
+    <Link
+      href={`/memory/${memory.id}`}
+      className="group block rounded-[1.75rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mono-sage/45"
+    >
+      <div className="relative min-h-[10.5rem] overflow-hidden rounded-[1.75rem] shadow-elev ring-1 ring-white/45">
+        <div
+          className="absolute inset-0 bg-gradient-to-br from-amber-100/80 via-rose-50/50 to-cyan-100/40 transition-transform duration-[1.1s] ease-out group-hover:scale-[1.015]"
+          aria-hidden
+        />
+        <div
+          className="absolute inset-0 bg-gradient-to-t from-mono-ink/28 via-mono-ink/6 to-white/5"
+          aria-hidden
+        />
+        <div
+          className="absolute inset-0 bg-[radial-gradient(ellipse_at_18%_0%,rgba(255,255,255,0.5),transparent_58%)] opacity-90 mix-blend-overlay"
+          aria-hidden
+        />
+
+        <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full border border-white/50 bg-mono-ink/8 px-2.5 py-1 text-[10px] font-medium text-mono-ink/85 shadow-ambient backdrop-blur-md">
+          <span className="text-[12px] leading-none" aria-hidden>
+            📷
+          </span>
+          <span className="tabular-nums tracking-wide">{memory.date}</span>
+        </div>
+
+        <div className="absolute bottom-0 left-0 right-0 p-3.5 sm:p-4">
+          <div className="rounded-2xl border border-white/40 bg-white/18 px-3.5 py-3 shadow-soft [box-shadow:inset_0_1px_0_rgba(255,255,255,0.5)] backdrop-blur-[20px]">
+            <p className="text-[10px] font-medium tracking-[0.18em] text-mono-ink/65">
+              いまの1ページ
+            </p>
+            <div className="mt-1.5 flex items-start gap-2">
+              <span
+                aria-hidden
+                className="mt-0.5 inline-block h-7 w-1 shrink-0 rounded-full"
+                style={{ background: animal.accent }}
+              />
+              <p className="min-w-0 text-sm font-semibold leading-relaxed text-mono-ink/95 [text-shadow:0_1px_0_rgba(255,255,255,0.4)] line-clamp-2">
+                {memory.preview}
+              </p>
+            </div>
+            <div className="mt-2.5 flex flex-wrap gap-1.5">
+              {tags.slice(0, 3).map((t) => (
+                <span
+                  key={t}
+                  className="inline-flex items-center rounded-full border border-white/50 bg-white/35 px-2.5 py-0.5 text-[10px] font-medium text-mono-ink/90 backdrop-blur-sm"
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
 
 export default function Home() {
+  const reduceMotion = useReducedMotion();
   // 主役決定用のメモリーID（既定: 最新 = recentMemories[0]）
   const [heroMemoryId, setHeroMemoryId] = useState<string | null>(
     recentMemories[0]?.id ?? null,
@@ -107,16 +153,30 @@ export default function Home() {
         className="pointer-events-none fixed inset-0 -z-20"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={transitions.gentle}
+        transition={reduceMotion ? { duration: 0 } : transitions.gentle}
         style={{
-          background: `radial-gradient(90% 60% at 50% 12%, ${heroAnimal.accent}2e 0%, transparent 62%)`,
+          background: `radial-gradient(94% 62% at 50% 11%, color-mix(in oklab, ${heroAnimal.accent} 15%, transparent) 0%, transparent 64%),
+            radial-gradient(128% 88% at 50% 0%, color-mix(in oklab, ${heroAnimal.accent} 6.5%, transparent) 0%, transparent 50%)`,
         }}
       />
 
-      <AppHeader date={today} eyebrow="Today" />
+      <AppHeader date={today} eyebrow="今日のあなた" />
+
+      {heroMemory && (
+        <div className="mx-auto w-full max-w-6xl px-5 pt-3 lg:pt-5">
+          <FeaturedStory
+            memory={heroMemory}
+            tags={[
+              EMOTION_CHIP[heroMemory.animalId].label,
+              heroMemory.tags[0],
+              heroMemory.tags[1],
+            ]}
+          />
+        </div>
+      )}
 
       {/* 3カラム：lg 以上で左4 / 中央5 / 右3、未満はスタック（中央→思い出→図鑑） */}
-      <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-6 px-5 pt-4 lg:grid-cols-12 lg:gap-8 lg:pt-6">
+      <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-6 px-5 pt-4 lg:grid-cols-12 lg:gap-8 lg:pt-5">
         {/* ---------- 中央：主役3D ---------- */}
         <section className="order-1 flex flex-col items-center lg:order-2 lg:col-span-5">
           <HeroColumn
@@ -168,6 +228,13 @@ function HeroColumn({
   actionTick: number;
   onInteract: () => void;
 }) {
+  const reduceMotion = useReducedMotion();
+  const [clientReady, setClientReady] = useState(false);
+  useEffect(() => {
+    setClientReady(true);
+  }, []);
+  const showPulseRings = clientReady && !tapped && !reduceMotion;
+
   return (
     <div className="flex w-full flex-col items-center">
       <div className="relative flex h-72 w-72 items-center justify-center sm:h-80 sm:w-80 lg:h-[22rem] lg:w-[22rem]">
@@ -177,9 +244,9 @@ function HeroColumn({
           style={{ background: `${heroAnimal.accent}66` }}
         />
 
-        {/* パルスリング（未タップ時のみ） */}
+        {/* パルスリング（水合後のみ。prefers-reduced-motion は CSR で確定するため SSR 不一致を防ぐ） */}
         <AnimatePresence>
-          {!tapped && (
+          {showPulseRings && (
             <>
               <motion.span
                 key="ring-1"
@@ -239,11 +306,15 @@ function HeroColumn({
           transition={transitions.default}
           className="mt-3 flex flex-col items-center text-center"
         >
-          <p className="text-[10px] font-medium uppercase tracking-[0.32em] text-muted-foreground/70">
-            Today&apos;s companion
+          <p className="text-[10px] font-medium tracking-[0.2em] text-muted-foreground/75">
+            今日の相棒
           </p>
-          <h1 className="mt-1.5 inline-flex items-center gap-2 text-[28px] font-bold leading-tight text-foreground">
-            <span aria-hidden>{heroAnimal.emoji}</span>
+          <h1 className="mt-1.5 inline-flex items-center gap-2.5 text-2xl font-bold leading-tight text-foreground">
+            <span
+              aria-hidden
+              className="inline-block h-8 w-1.5 shrink-0 rounded-full"
+              style={{ background: heroAnimal.accent }}
+            />
             <span>{heroAnimal.label}</span>
           </h1>
           <span
@@ -258,9 +329,9 @@ function HeroColumn({
 
           {/* 日付 + プレビュー（1行） */}
           {heroMemory && (
-            <p className="mt-2 max-w-xs text-xs text-muted-foreground/90">
+            <p className="mt-2 max-w-xs text-xs text-[color:var(--muted-foreground-elevated)]">
               <span
-                className="mr-1.5 font-semibold tracking-wider"
+                className="mr-1.5 font-semibold tabular-nums tracking-wider"
                 style={{ color: heroAnimal.accent }}
               >
                 {heroMemory.date}
@@ -281,15 +352,23 @@ function HeroColumn({
                 transition={transitions.default}
                 className="shadow-ambient mt-3 inline-flex items-center gap-1.5 rounded-full border border-white/55 bg-white/55 px-3 py-1 text-[11px] text-muted-foreground backdrop-blur"
               >
-                <motion.span
-                  className="size-1.5 rounded-full"
-                  style={{
-                    background: heroAnimal.accent,
-                    boxShadow: `0 0 10px ${heroAnimal.accent}`,
-                  }}
-                  animate={{ opacity: [1, 0.3, 1] }}
-                  transition={{ duration: 1.6, repeat: Infinity }}
-                />
+                {reduceMotion ? (
+                  <span
+                    className="size-1.5 rounded-full"
+                    style={{ background: heroAnimal.accent }}
+                    aria-hidden
+                  />
+                ) : (
+                  <motion.span
+                    className="size-1.5 rounded-full"
+                    style={{
+                      background: heroAnimal.accent,
+                      boxShadow: `0 0 10px ${heroAnimal.accent}`,
+                    }}
+                    animate={{ opacity: [1, 0.3, 1] }}
+                    transition={{ duration: 1.6, repeat: Infinity }}
+                  />
+                )}
                 タップしてあいさつ
               </motion.span>
             ) : (
@@ -330,24 +409,40 @@ function MemoriesColumn({
 }) {
   return (
     <div className="mx-auto w-full max-w-md lg:max-w-none">
+      <div className="mb-2 flex items-center gap-2">
+        <span className="font-mono text-[10px] tracking-[0.2em] text-primary/80">
+          01
+        </span>
+        <span className="text-[9px] font-medium tracking-[0.2em] text-muted-foreground/70">
+          Memories
+        </span>
+        <span
+          aria-hidden
+          className="ml-1 h-px min-w-0 flex-1"
+          style={{
+            background:
+              "linear-gradient(90deg, color-mix(in oklab, var(--primary) 22%, transparent) 0%, transparent 100%)",
+          }}
+        />
+      </div>
       <div className="flex items-baseline justify-between">
-        <h2 className="text-base font-semibold tracking-tight">最近の思い出</h2>
+        <h2 className="text-base font-semibold tracking-tight">直近の思い出</h2>
         <Link
           href={ALL_MEMORIES_HREF}
-          className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+          className="text-xs text-[color:var(--muted-foreground-elevated)] transition-colors hover:text-foreground"
         >
-          すべて見る →
+          すべて見る
         </Link>
       </div>
 
       <motion.div
-        className="mt-3 flex flex-col gap-2.5"
+        className="mt-2 flex flex-col divide-y divide-foreground/8"
         initial="initial"
         animate="animate"
         variants={cardStagger.container}
       >
         {memories.map((m, idx) => (
-          <motion.div key={m.id} variants={cardStagger.item}>
+          <motion.div key={m.id} className="pt-2.5 first:pt-0" variants={cardStagger.item}>
             <MemoryCard
               memory={m}
               isHero={m.id === heroMemoryId}
@@ -380,78 +475,82 @@ function MemoryCard({
       aria-pressed={isHero}
       className="group block w-full text-left"
     >
-      <GlassCard
-        className={`relative overflow-hidden p-0 transition-all ${
-          isHero
-            ? "scale-[1.01] bg-white/75"
-            : "bg-white/45 hover:scale-[1.005] hover:bg-white/60"
-        }`}
-      >
-        {/* 主役カード：左端のアクセントバー + 極薄グロー */}
-        {isHero && (
-          <>
-            <span
-              className="absolute inset-y-0 left-0 w-[3px]"
-              style={{
-                background: `linear-gradient(180deg, ${animal.accent} 0%, ${animal.accent}44 100%)`,
-              }}
-            />
-            <span
-              className="pointer-events-none absolute inset-0 opacity-40"
-              style={{
-                background: `radial-gradient(120% 80% at 0% 50%, ${animal.accent}33 0%, transparent 55%)`,
-              }}
-            />
-          </>
+      <div
+        className={cn(
+          "relative flex gap-3 rounded-xl px-0.5 py-1 transition-all",
+          isHero &&
+            "bg-gradient-to-r from-primary/[0.08] to-transparent ring-1 ring-primary/20",
         )}
-
-        <div className="relative flex items-stretch">
-          <div
-            className="relative flex w-20 shrink-0 items-center justify-center text-3xl"
-            style={{
-              background: `linear-gradient(180deg, ${animal.accent}44 0%, ${animal.accent}0f 100%)`,
-            }}
-          >
-            <span aria-hidden>{animal.emoji}</span>
-          </div>
-
-          <div className="min-w-0 flex-1 p-3.5">
-            <div className="flex items-center gap-1.5">
-              {isLatest && (
-                <span
-                  className="rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-white"
-                  style={{ background: animal.accent }}
-                >
-                  Today
-                </span>
-              )}
-              <span className="text-[11px] font-semibold tracking-wider text-muted-foreground">
-                {memory.date}
+      >
+        {isHero && (
+          <span
+            className="absolute bottom-0 left-0 top-0 w-[2px] rounded-full"
+            style={{ background: animal.accent }}
+            aria-hidden
+          />
+        )}
+        <div
+          className={cn(
+            "relative size-[4.5rem] shrink-0 overflow-hidden rounded-xl ring-1 ring-mono-ink/10",
+            isLatest && "ring-2",
+          )}
+          style={isLatest ? { boxShadow: `0 0 0 1px ${animal.accent}55` } : undefined}
+        >
+          <Image
+            src={memory.imageUrl}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="72px"
+          />
+        </div>
+        <div className="min-w-0 flex-1 pr-0.5 pt-0.5">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            {isLatest && (
+              <span
+                className="rounded px-1 py-0.5 text-[8px] font-bold tracking-widest text-white"
+                style={{ background: animal.accent }}
+              >
+                NEW
               </span>
-            </div>
-            <p className="mt-0.5 text-sm font-semibold leading-tight">
-              {animal.label}
-            </p>
-            <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-              {memory.preview}
-            </p>
+            )}
+            <time className="text-[12px] font-medium tabular-nums text-muted-foreground">
+              {memory.date}
+            </time>
+            <span className="min-w-0 text-sm font-semibold leading-snug text-foreground">
+              {memory.listTitle}
+            </span>
           </div>
-
-          <div className="flex items-center pr-3 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              aria-hidden
-            >
-              <path d="M9 18l6-6-6-6" />
-            </svg>
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            {memory.meta != null && memory.meta !== "" && (
+              <span className="text-[10px] tabular-nums text-muted-foreground/85">
+                {memory.meta}
+              </span>
+            )}
+            {memory.tags.map((t) => (
+              <span
+                key={t}
+                className="inline-flex rounded-full border border-amber-900/14 bg-mono-cream/55 px-2 py-0.5 text-[10px] font-medium text-[#4a3f34]"
+              >
+                {t}
+              </span>
+            ))}
           </div>
         </div>
-      </GlassCard>
+        <div className="flex shrink-0 items-center self-center text-muted-foreground/50 transition-transform group-hover:translate-x-0.5">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden
+          >
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        </div>
+      </div>
     </button>
   );
 }
@@ -474,11 +573,24 @@ function CatalogColumn({
 
   return (
     <div className="mx-auto w-full max-w-md lg:max-w-none lg:sticky lg:top-6">
-      <div className="flex items-baseline justify-between">
-        <h2 className="text-base font-semibold tracking-tight">動物図鑑</h2>
-        <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
+      <div className="mb-2 flex items-center gap-2">
+        <span className="font-mono text-[10px] tracking-[0.2em] text-primary/80">
+          02
+        </span>
+        <span className="text-[9px] font-medium uppercase tracking-[0.28em] text-muted-foreground/70">
           Catalog
         </span>
+        <span
+          aria-hidden
+          className="ml-1 h-px min-w-0 flex-1"
+          style={{
+            background:
+              "linear-gradient(90deg, color-mix(in oklab, var(--primary) 22%, transparent) 0%, transparent 100%)",
+          }}
+        />
+      </div>
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-base font-semibold tracking-tight">動物図鑑</h2>
       </div>
 
       {/* チップグリッド 3×2 */}
