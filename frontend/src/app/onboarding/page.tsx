@@ -34,11 +34,18 @@ export default function OnboardingPage() {
 
   const handleNext = () => {
     if (isLast) {
-      router.push("/");
+      markAndGo();
     } else {
       setCurrent((prev) => prev + 1);
     }
   };
+
+  const ONBOARDED_KEY = "app_onboarded";
+
+  const markAndGo = () => {
+    localStorage.setItem(ONBOARDED_KEY, "true");
+    router.push("/");
+  }
 
   return (
     <div className="flex min-h-dvh flex-col items-center justify-between px-6 py-12">
@@ -98,7 +105,7 @@ export default function OnboardingPage() {
           <Button
             variant="ghost"
             className="h-10 w-full rounded-2xl text-sm text-muted-foreground"
-            onClick={() => router.push("/")}
+            onClick={() => markAndGo()}
           >
             Googleアカウントでログイン
           </Button>
@@ -106,7 +113,7 @@ export default function OnboardingPage() {
 
         {!isLast && (
           <button
-            onClick={() => router.push("/")}
+            onClick={() => markAndGo()}
             className="text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
             スキップ
