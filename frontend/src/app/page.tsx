@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { AppHeader } from "@/components/app-header";
 import { GlassCard } from "@/components/glass-card";
@@ -42,6 +42,12 @@ function formatToday() {
 }
 
 const ALL_MEMORIES_HREF = "/memory";
+
+const emptySubscribe = () => () => {};
+
+function useIsClient() {
+  return useSyncExternalStore(emptySubscribe, () => true, () => false);
+}
 
 function FeaturedStory({ memory, tags }: { memory: Memory; tags: string[] }) {
   const animal = getAnimal(memory.animalId);
@@ -105,10 +111,6 @@ function FeaturedStory({ memory, tags }: { memory: Memory; tags: string[] }) {
 
 export default function Home() {
   const { isChecking } = useOnboarding();
-  if (isChecking) {
-    return null;
-  }
-
   const reduceMotion = useReducedMotion();
   // 主役決定用のメモリーID（既定: 最新 = recentMemories[0]）
   const [heroMemoryId, setHeroMemoryId] = useState<string | null>(
@@ -149,6 +151,10 @@ export default function Home() {
     setTapped(false);
     setActionTick(0);
   };
+
+  if (isChecking) {
+    return null;
+  }
 
   return (
     <motion.div className="relative" {...pageTransition}>
@@ -235,10 +241,7 @@ function HeroColumn({
   onInteract: () => void;
 }) {
   const reduceMotion = useReducedMotion();
-  const [clientReady, setClientReady] = useState(false);
-  useEffect(() => {
-    setClientReady(true);
-  }, []);
+  const clientReady = useIsClient();
   const showPulseRings = clientReady && !tapped && !reduceMotion;
 
   return (
