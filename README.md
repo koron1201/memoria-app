@@ -122,6 +122,10 @@ memoria-app/
 │   ├── 04_implementation-timeline.md
 │   └── 05_design-direction.md
 │
+│── docker-compose.yml
+│
+│── Dockerfile.dev
+│
 ├── .env.example               # 環境変数キー一覧（ルート参照用）
 ├── .github/workflows/ci.yml   # CI（lint / build）
 └── README.md                  # このファイル
@@ -141,7 +145,7 @@ memoria-app/
 |----------|------|---------------|
 | 自由っぽい | 🐱 ネコ | 気まぐれに世界を歩く |
 | 寂しい・不安 | 🐰 ウサギ | そっと寄り添う、繊細な心 |
-| 元気・活発 | 🦁 ライオン | 太陽のように輝く情熱 |
+| 元気・活発 | 🦁 | 太陽のように輝く情熱 |
 | 穏やか・安定 | 🐻 クマ | どっしり構えた安心感 |
 | 好奇心旺盛 | 🦊 キツネ | 知りたがりの探究者 |
 
