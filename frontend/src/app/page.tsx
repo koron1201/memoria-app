@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Avatar } from "@/components/avatar";
 import { GlassCard } from "@/components/glass-card";
 import { pageTransition, cardStagger } from "@/lib/motion";
+import {useOnboarding} from "@/app/hooks/useOnboarding";
 
 const recentMemories = [
   { id: "1", date: "4月15日", emoji: "🐱", mood: "自由っぽい", thumbnail: null },
@@ -13,11 +14,19 @@ const recentMemories = [
 ];
 
 export default function Home() {
+  useOnboarding();
   return (
     <motion.div
-      className="flex flex-col items-center gap-6 px-5 pt-8"
+      className="relative flex flex-col items-center gap-6 px-5 pt-8"
       {...pageTransition}
     >
+      {/*使い方リンク*/}
+      <Link
+        href = "/onboarding"
+        className="absolute right-5 top-4 rounded-full border border-[#B8A9E8]/40 px-3 py-1 text-xs text-[#B8A9E8]"
+      >
+       使い方を見る
+      </Link>
       {/* アバターエリア */}
       <section className="flex flex-col items-center gap-3">
         <Avatar size="lg" />
