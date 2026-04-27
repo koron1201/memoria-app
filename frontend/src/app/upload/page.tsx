@@ -87,7 +87,12 @@ export default function UploadPage() {
       localStorage.setItem(APP_LS.lastAnalysis, JSON.stringify(result));
       if (previewUrl) localStorage.setItem(APP_LS.lastImage, previewUrl);
 
-      router.push("/memory/1");
+      // バックエンドから返ってきたIDがあればそれを使う。なければ一覧へ。
+      if (result.id) {
+        router.push(`/memory/${result.id}`); 
+      } else {
+        router.push("/memory");
+      }
     } catch (error) {
       console.error(error);
       alert("AI解析中にエラーが発生しました。バックエンドが動いているか確認してください。");
