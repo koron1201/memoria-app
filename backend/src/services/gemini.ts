@@ -29,7 +29,7 @@ const schema = {
  */
 export async function analyzeMemory(imageBuffer: Buffer, userText: string, mimeType: string) {
   const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-flash",
+    model: "gemini-2.5-flash-lite",
     generationConfig: {
       responseMimeType: "application/json",
       responseSchema: schema,
@@ -52,11 +52,19 @@ export async function analyzeMemory(imageBuffer: Buffer, userText: string, mimeT
     ・ユーザーの短いメモ: 「${userText}」
 
     【あなたの任務】
-    1. ユーザーのメモを「素材」として使い、200文字程度の【全く新しい日記】を一人称（私、僕など）で創作してください。
-    2. ユーザーのメモをそのまま出力することは厳禁です。必ずあなたの言葉でエモく膨らませてください。
-    3. 写真の色彩や雰囲気から、隠れた感情を読み取って文章に反映させてください。
+    1. ユーザーのメモを素材に、200文字程度の【全く新しい日記】を一人称で創作してください。メモをそのまま出力せず、写真の色彩や雰囲気から読み取った感情をエモく膨らませてください。
+    2. 入力内容の雰囲気から、以下の【動物リスト】の中から、最も適した「animalId」を**必ず1つだけ**選択してください。
 
-    必ず指定されたJSON形式で diaryText フィールドに出力してください。
+    【動物リスト（animalIdとして使用する英単語）】
+    - lion    （情熱的、誇り、リーダーシップを感じる時）
+    - rabbit  （思慮深い、穏やか、繊細、静かな時間を過ごしている時）
+    - cat     （気まぐれ、自由、冒険心、自分らしくいたい時）
+    - bear    （穏やか、包容力、ゆったりとした安心感がある時）
+    - fox     （好奇心旺盛、知恵、何か新しいものを探求している時）
+
+    【出力ルール】
+    ・必ず指定されたJSON形式で出力してください。
+    ・animalId フィールドには、上記のリストにある **lion, rabbit, cat, bear, fox のいずれか1つ**を、引用符なしの英単語のみで入れてください。
   `;
 
   try {
