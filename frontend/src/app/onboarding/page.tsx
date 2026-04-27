@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { transitions } from "@/lib/motion";
+// 【修正点1】共通化した定数を読み込む
+import { ONBOARDED_KEY } from "@/lib/app-local-storage";
 
 const slides = [
   {
@@ -34,92 +36,99 @@ export default function OnboardingPage() {
 
   const handleNext = () => {
     if (isLast) {
-      markAndGo();
+      markAndGoHome();
     } else {
       setCurrent((prev) => prev + 1);
     }
   };
 
-  const ONBOARDED_KEY = "app_onboarded";
-
-  const markAndGo = () => {
+  // ゲストとしてホームへ行く処理
+  const markAndGoHome = () => {
     localStorage.setItem(ONBOARDED_KEY, "true");
     router.push("/");
-  }
+  };
+
+  // 【修正点2】ログインページへ遷移する処理を追加
+  // ※遷移先のパス "/login" は実際のログインページのURLに合わせてください
+  const goToLogin = () => {
+    localStorage.setItem(ONBOARDED_KEY, "true");
+    router.push("/login");
+  };
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-between px-6 py-12">
-      {/* スライドコンテンツ */}
-      <div className="flex flex-1 flex-col items-center justify-center">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={current}
-            initial={{ opacity: 0, x: 60 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -60 }}
-            transition={transitions.gentle}
-            className="flex flex-col items-center gap-6 text-center"
-          >
-            <div
-              className={`flex size-28 items-center justify-center rounded-3xl bg-gradient-to-br ${slides[current].gradient} shadow-lg`}
+      <div className="flex min-h-dvh flex-col items-center justify-between px-6 py-12">
+        {/* スライドコンテンツ */}
+        <div className="flex flex-1 flex-col items-center justify-center">
+          <AnimatePresence mode="wait">
+            <motion.div
+                key={current}
+                initial={{ opacity: 0, x: 60 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -60 }}
+                transition={transitions.gentle}
+                className="flex flex-col items-center gap-6 text-center"
             >
-              <span className="text-5xl">{slides[current].emoji}</span>
-            </div>
-            <h1 className="text-2xl font-bold leading-snug">
-              {slides[current].title}
-            </h1>
-            <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
-              {slides[current].description}
-            </p>
-          </motion.div>
-        </AnimatePresence>
-      </div>
-
-      {/* インジケーター + ボタン */}
-      <div className="flex w-full max-w-xs flex-col items-center gap-6">
-        {/* ドットインジケーター */}
-        <div className="flex gap-2">
-          {slides.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrent(i)}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                i === current
-                  ? "w-6 bg-[#B8A9E8]"
-                  : "w-2 bg-[#B8A9E8]/30"
-              }`}
-              aria-label={`スライド ${i + 1}`}
-            />
-          ))}
+              <div
+                  className={`flex size-28 items-center justify-center rounded-3xl bg-gradient-to-br ${slides[current].gradient} shadow-lg`}
+              >
+                <span className="text-5xl">{slides[current].emoji}</span>
+              </div>
+              <h1 className="text-2xl font-bold leading-snug">
+                {slides[current].title}
+              </h1>
+              <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+                {slides[current].description}
+              </p>
+            </motion.div>
+          </AnimatePresence>
         </div>
 
-        <Button
-          onClick={handleNext}
-          className="h-12 w-full rounded-2xl bg-[#B8A9E8] text-base font-medium text-white hover:bg-[#a898d8]"
-          size="lg"
-        >
-          {isLast ? "はじめる" : "次へ"}
-        </Button>
+        {/* インジケーター + ボタン */}
+        <div className="flex w-full max-w-xs flex-col items-center gap-6">
+          {/* ドットインジケーター */}
+          <div className="flex gap-2">
+            {slides.map((_, i) => (
+                <button
+                    key={i}
+                    onClick={() => setCurrent(i)}
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                        i === current
+                            ? "w-6 bg-[#B8A9E8]"
+                            : "w-2 bg-[#B8A9E8]/30"
+                    }`}
+                    aria-label={`スライド ${i + 1}`}
+                />
+            ))}
+          </div>
 
-        {isLast && (
           <Button
-            variant="ghost"
-            className="h-10 w-full rounded-2xl text-sm text-muted-foreground"
-            onClick={() => markAndGo()}
+              onClick={handleNext}
+              className="h-12 w-full rounded-2xl bg-[#B8A9E8] text-base font-medium text-white hover:bg-[#a898d8]"
+              size="lg"
           >
-            Googleアカウントでログイン
+            {isLast ? "はじめる" : "次へ"}
           </Button>
-        )}
 
-        {!isLast && (
-          <button
-            onClick={() => markAndGo()}
-            className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-          >
-            スキップ
-          </button>
-        )}
+          {/* 【修正点3】ボタンのクリックイベントを goToLogin に変更 */}
+          {isLast && (
+              <Button
+                  variant="ghost"
+                  className="h-10 w-full rounded-2xl text-sm text-muted-foreground"
+                  onClick={goToLogin}
+              >
+                Googleアカウントでログイン
+              </Button>
+          )}
+
+          {!isLast && (
+              <button
+                  onClick={markAndGoHome}
+                  className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+              >
+                スキップ
+              </button>
+          )}
+        </div>
       </div>
-    </div>
   );
 }
