@@ -13,6 +13,7 @@
     "@hono/node-server": "^1.19.14",
     "@supabase/supabase-js": "^2.49.0",
     "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
     "hono": "^4.7.0",
     "multer": "^2.1.1"
   },
