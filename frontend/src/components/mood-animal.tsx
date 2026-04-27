@@ -8,7 +8,7 @@ const MoodAnimalScene = dynamic(
     ssr: false,
     loading: () => (
       <div className="relative flex h-72 w-72 items-center justify-center sm:h-80 sm:w-80">
-        <div className="size-56 animate-pulse rounded-full bg-gradient-to-br from-[#B8A9E8]/40 via-[#F2B5D4]/30 to-[#89CFF0]/40 blur-xl" />
+        <div className="size-56 animate-pulse rounded-full bg-gradient-to-br from-mono-sage/35 via-mono-moss/30 to-mono-cream/45 blur-xl" />
       </div>
     ),
   },

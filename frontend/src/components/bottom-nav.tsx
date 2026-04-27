@@ -4,88 +4,154 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-const navItems = [
-  {
-    href: "/",
-    label: "ホーム",
-    icon: (
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden
-      >
-        <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" />
-        <path d="M9 21V12h6v9" />
-      </svg>
-    ),
-  },
-  {
-    href: "/upload",
-    label: "記録",
-    icon: (
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden
-      >
-        <rect x="3" y="3" width="18" height="18" rx="2" />
-        <circle cx="9" cy="9" r="2" />
-        <path d="M21 15l-5-5L5 21" />
-      </svg>
-    ),
-  },
-  {
-    href: "/tanzaku",
-    label: "短冊",
-    icon: (
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden
-      >
-        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z" />
-      </svg>
-    ),
-  },
-  {
-    href: "/profile",
-    label: "マイページ",
-    icon: (
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden
-      >
-        <circle cx="12" cy="8" r="4" />
-        <path d="M6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" />
-      </svg>
-    ),
-  },
+const iconClass =
+  "transition-[color,transform] duration-200 [&_svg]:text-current";
+
+const items = {
+  home: (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" />
+      <path d="M9 21V12h6v9" />
+    </svg>
+  ),
+  memory: (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="3" y="3" width="7" height="9" rx="1" />
+      <rect x="14" y="3" width="7" height="5" rx="1" />
+      <rect x="14" y="10" width="7" height="11" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+    </svg>
+  ),
+  tanzaku: (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z" />
+    </svg>
+  ),
+  profile: (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <circle cx="12" cy="8" r="4" />
+      <path d="M6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" />
+    </svg>
+  ),
+  plus: (
+    <svg
+      width="26"
+      height="26"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.25"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  ),
+} as const;
+
+type SideItem = { href: string; label: string; icon: (typeof items)[keyof typeof items] };
+
+const left: SideItem[] = [
+  { href: "/", label: "ホーム", icon: items.home },
+  { href: "/memory", label: "思い出", icon: items.memory },
 ];
+
+const right: SideItem[] = [
+  { href: "/tanzaku", label: "夢", icon: items.tanzaku },
+  { href: "/profile", label: "マイページ", icon: items.profile },
+];
+
+function isActivePath(pathname: string | null, href: string): boolean {
+  if (href === "/") return pathname === "/";
+  if (!pathname) return false;
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function NavPill({
+  item,
+  pathname,
+}: {
+  item: SideItem;
+  pathname: string | null;
+}) {
+  const active = isActivePath(pathname, item.href);
+  return (
+    <Link
+      href={item.href}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "group relative flex min-h-[2.75rem] min-w-0 flex-1 flex-col items-center justify-end gap-0.5 rounded-2xl px-1.5 pb-0.5 pt-1 text-[10px] font-medium tracking-wide transition-[color,background] duration-200 ease-out",
+        active
+          ? "text-mono-ink"
+          : "text-muted-foreground/65 hover:text-foreground/88",
+      )}
+    >
+      {active && (
+        <span
+          aria-hidden
+          className="absolute inset-0 rounded-2xl bg-[color:color-mix(in_oklab,var(--mono-sage)_12%,transparent)]"
+          style={{
+            boxShadow:
+              "inset 0 1px 0 rgba(255,255,255,0.55), 0 1px 0 color-mix(in oklab, var(--mono-sage) 10%, transparent)",
+          }}
+        />
+      )}
+      <span
+        className={cn(
+          "relative",
+          iconClass,
+          active
+            ? "text-mono-ink [&_svg]:text-mono-sage"
+            : "[&_svg]:text-muted-foreground/55 group-hover:[&_svg]:text-foreground/75",
+        )}
+      >
+        {item.icon}
+      </span>
+      <span className="relative leading-none">{item.label}</span>
+    </Link>
+  );
+}
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -93,6 +159,8 @@ export function BottomNav() {
   if (pathname?.startsWith("/onboarding")) {
     return null;
   }
+
+  const fabActive = pathname?.startsWith("/upload");
 
   return (
     <nav
@@ -103,52 +171,37 @@ export function BottomNav() {
         paddingRight: "var(--nav-float-inset)",
       }}
     >
-      <div
-        className="shadow-elev inset-highlight pointer-events-auto mb-3 flex w-full max-w-lg items-center justify-around gap-1 rounded-[var(--nav-float-radius)] border border-white/60 bg-white/75 px-2 py-1.5 backdrop-blur-xl"
-      >
-        {navItems.map((item) => {
-          const isActive =
-            item.href === "/"
-              ? pathname === "/"
-              : pathname?.startsWith(item.href);
+      <div className="shell-floating pointer-events-auto relative mb-3 w-full max-w-lg pt-1">
+        <div className="flex w-full items-end">
+          <div className="flex min-w-0 flex-1 items-end justify-between gap-0.5 pr-0.5">
+            {left.map((item) => (
+              <NavPill key={item.href} item={item} pathname={pathname} />
+            ))}
+          </div>
 
-          return (
+          <div className="relative flex w-[4.5rem] shrink-0 flex-col items-center">
             <Link
-              key={item.href}
-              href={item.href}
-              aria-current={isActive ? "page" : undefined}
+              href="/upload"
+              aria-current={fabActive ? "page" : undefined}
               className={cn(
-                "group relative flex flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl px-2 py-1.5 text-[11px] tracking-wide transition-all duration-200 ease-out",
-                isActive
-                  ? "text-primary"
-                  : "text-muted-foreground/70 hover:text-foreground",
+                "pointer-events-auto absolute -top-6 flex h-[3.35rem] w-[3.35rem] items-center justify-center rounded-full text-white shadow-elev",
+                "bg-gradient-to-br from-mono-sage to-[color:color-mix(in_oklab,var(--mono-sage)_70%,#3a3834)]",
+                "ring-2 ring-white/55 transition-transform active:scale-95",
+                fabActive && "ring-4 ring-mono-sage/30",
               )}
             >
-              {/* アクティブ時のピル背景 */}
-              {isActive && (
-                <span
-                  aria-hidden
-                  className="absolute inset-0 rounded-2xl"
-                  style={{
-                    background:
-                      "linear-gradient(180deg, color-mix(in oklab, var(--primary) 14%, transparent) 0%, color-mix(in oklab, var(--primary) 6%, transparent) 100%)",
-                    boxShadow:
-                      "inset 0 1px 0 rgba(255,255,255,0.55), 0 4px 14px color-mix(in oklab, var(--primary) 18%, transparent)",
-                  }}
-                />
-              )}
-              <span
-                className={cn(
-                  "relative transition-transform duration-200",
-                  isActive ? "scale-[1.04]" : "group-active:scale-95",
-                )}
-              >
-                {item.icon}
-              </span>
-              <span className="relative font-medium">{item.label}</span>
+              <span className="drop-shadow-sm">{items.plus}</span>
+              <span className="sr-only">記録（アップロード）</span>
             </Link>
-          );
-        })}
+            <div className="h-[2.75rem] w-full" aria-hidden />
+          </div>
+
+          <div className="flex min-w-0 flex-1 items-end justify-between gap-0.5 pl-0.5">
+            {right.map((item) => (
+              <NavPill key={item.href} item={item} pathname={pathname} />
+            ))}
+          </div>
+        </div>
       </div>
     </nav>
   );

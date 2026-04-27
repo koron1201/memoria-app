@@ -6,9 +6,9 @@ services:
       dockerfile: ../Dockerfile.dev
     ports:
       - "3001:3001"
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
+    #volumes:
+      #- ./backend:/app
+      #- /app/node_modules
     env_file:
       - ./backend/.env.local
 
@@ -19,8 +19,8 @@ services:
       dockerfile: ../Dockerfile.dev
     ports:
       - "3000:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+    #volumes:
+      #- ./frontend:/app
+      #- /app/node_modules
     env_file:
       - ./frontend/.env.local

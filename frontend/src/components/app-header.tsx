@@ -1,68 +1,65 @@
 /**
  * AppHeader
  *
- * 画面上部の sticky ヘッダー。
- * - 背景は backdrop-blur（var(--header-blur)）
- * - 下辺は max-w-6xl の範囲にのみ、左右フェードするヘアラインを1px
- * - 日付は tabular-nums + 曜日の前後に薄い区切り
- * - ブランドチップは inset 1px のハイライトで面を起こす
+ * 上端：ニュートラルな霧＋低コントラスト境界。
+ * ブランド表記は字間重視（大文字太チップ化を避ける）
  */
+import { cn } from "@/lib/utils";
+
 export interface AppHeaderProps {
   date?: string;
-  /** 日付の右に並べる小さな補助テキスト（例: "今日の記録"） */
   eyebrow?: string;
 }
 
 export function AppHeader({ date, eyebrow }: AppHeaderProps) {
   return (
-    <header
-      className="sticky top-0 z-40 w-full pt-safe"
-      style={{ backdropFilter: `blur(var(--header-blur))` }}
-    >
+    <header className="sticky top-0 z-40 w-full border-b border-foreground/6 pt-safe shell-surface">
       <div
-        className="absolute inset-0 -z-10"
+        className="pointer-events-none absolute inset-0 -z-10"
         style={{
           background:
-            "linear-gradient(180deg, rgba(250,250,254,0.72) 0%, rgba(250,250,254,0.32) 85%, transparent 100%)",
+            "linear-gradient(180deg, color-mix(in oklab, white 5%, transparent) 0%, transparent 85%)",
         }}
         aria-hidden
       />
-
-      <div className="mx-auto w-full max-w-6xl px-5 pb-3 pt-4">
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col leading-tight">
+      <div className="relative mx-auto w-full max-w-6xl px-5 pb-3.5 pt-4">
+        <div className="flex items-end justify-between gap-6">
+          <div className="flex min-w-0 flex-col leading-tight">
             {eyebrow && (
-              <span className="text-[9px] font-medium uppercase tracking-[0.3em] text-muted-foreground/75">
+              <span className="text-[10px] font-medium tracking-[0.2em] text-muted-foreground/75">
                 {eyebrow}
               </span>
             )}
-            <time className="mt-0.5 text-[12px] font-medium tabular-nums text-muted-foreground/90">
+            <time className="mt-1.5 text-[13px] font-semibold tabular-nums tracking-tight text-foreground/88">
               {date}
             </time>
           </div>
 
-          <span
-            className="inset-highlight rounded-full border border-white/60 bg-white/55 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.28em] text-foreground/85 backdrop-blur"
-            aria-label="MEMORIA"
-          >
-            MEMORIA
-          </span>
+          <div className="flex items-center gap-2.5">
+            <span
+              aria-hidden
+              className="size-9 shrink-0 rounded-full bg-gradient-to-br from-[#e8c4b8] via-mono-moss/90 to-mono-sage shadow-soft ring-1 ring-white/60"
+            />
+            <span
+              className={cn(
+                "text-[1.05rem] font-bold leading-none tracking-tight text-mono-ink",
+                "[font-family:var(--font-noto-serif),ui-serif,serif]",
+              )}
+              aria-label="MonoLog"
+            >
+              MonoLog
+            </span>
+          </div>
         </div>
       </div>
-
-      {/* 髪糸ヘアライン：max-w-6xl の内側のみ、両端フェード */}
       <div
-        className="pointer-events-none absolute bottom-0 left-0 right-0 h-px"
+        className="pointer-events-none h-px w-full"
+        style={{
+          background:
+            "linear-gradient(90deg, transparent 0%, color-mix(in oklab, var(--foreground) 7%, white) 14%, color-mix(in oklab, var(--foreground) 4%, white) 50%, color-mix(in oklab, var(--foreground) 7%, white) 86%, transparent 100%)",
+        }}
         aria-hidden
-      >
-        <div
-          className="mx-auto h-full max-w-6xl"
-          style={{
-            background:
-              "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.6) 18%, rgba(184,169,232,0.35) 50%, rgba(255,255,255,0.6) 82%, transparent 100%)",
-          }}
-        />
-      </div>
+      />
     </header>
   );
 }

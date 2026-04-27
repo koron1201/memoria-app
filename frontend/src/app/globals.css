@@ -47,70 +47,123 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 
-  --color-lavender: #B8A9E8;
-  --color-rose: #F2B5D4;
-  --color-ocean: #89CFF0;
-  --color-gold: #FFD700;
-  --color-coral: #FF6B6B;
-  --color-snow: #FAFAFE;
+  --color-mono-sage: var(--mono-sage);
+  --color-mono-cream: var(--mono-cream);
+  --color-mono-sand: var(--mono-sand);
+  --color-mono-blush: var(--mono-blush);
+  --color-mono-paper: var(--mono-paper);
+  --color-mono-ink: var(--mono-ink);
+  --color-mono-moss: var(--mono-moss);
+  --color-mono-linen: var(--mono-linen);
 }
 
 :root {
-  --background: oklch(0.98 0.005 280);
-  --foreground: oklch(0.2 0.02 280);
+  /* MonoLog: 渋草・温かい紙面（参照モック: Sage #8A9A5B 帯） */
+  --mono-sage: #8a9a5b;
+  --mono-cream: #ece4d6;
+  --mono-sand: #c9a87c;
+  --mono-blush: #d9a29a;
+  --mono-paper: #f7f3ec;
+  --mono-ink: #3a3834;
+  --mono-moss: #8fa896;
+  --mono-linen: #c4b59a;
 
-  --primary: oklch(0.74 0.1 280);
-  --primary-foreground: oklch(1 0 0);
+  --background: #f5f1e9;
+  --foreground: #3a3834;
 
-  --secondary: oklch(0.82 0.08 340);
-  --secondary-foreground: oklch(0.2 0.02 280);
+  --primary: #8a9a5b;
+  --primary-foreground: #fffefc;
 
-  --accent: oklch(0.82 0.08 230);
-  --accent-foreground: oklch(0.2 0.02 280);
+  --secondary: #c9a87c;
+  --secondary-foreground: #3d3d3a;
 
-  --destructive: oklch(0.65 0.2 25);
+  --accent: #9bb5a5;
+  --accent-foreground: #2e342f;
 
-  --muted: oklch(0.95 0.01 280);
-  --muted-foreground: oklch(0.55 0.02 280);
+  --destructive: oklch(0.55 0.16 25);
 
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.2 0.02 280);
+  --muted: #e8e4dc;
+  --muted-foreground: #5c5954;
+  --muted-foreground-elevated: #6e6a63;
 
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.2 0.02 280);
+  --card: #fffcf8;
+  --card-foreground: #3d3d3a;
 
-  --border: oklch(0.92 0.01 280);
-  --input: oklch(0.92 0.01 280);
-  --ring: oklch(0.74 0.1 280);
+  --popover: #fffcf8;
+  --popover-foreground: #3d3d3a;
 
-  --chart-1: oklch(0.74 0.1 280);
-  --chart-2: oklch(0.82 0.08 340);
-  --chart-3: oklch(0.82 0.08 230);
-  --chart-4: oklch(0.85 0.15 90);
-  --chart-5: oklch(0.65 0.2 25);
+  --border: color-mix(in oklab, #3d3d3a 8%, #e8ddd0);
+  --input: color-mix(in oklab, #3d3d3a 6%, #f5f2ee);
+  --ring: #8a9a5b;
 
-  --radius: 1rem;
+  --chart-1: #8a9a5b;
+  --chart-2: #8fa896;
+  --chart-3: #c9a87c;
+  --chart-4: #d4847a;
+  --chart-5: #c4b59a;
 
-  /* 光の方向を上 → 下に統一。Y オフセットは正のみ */
-  --shadow-ambient: 0 1px 2px rgba(32, 20, 80, 0.05);
-  --shadow-soft: 0 6px 20px rgba(32, 20, 80, 0.06), 0 2px 6px rgba(32, 20, 80, 0.04);
-  --shadow-elev: 0 12px 34px rgba(32, 20, 80, 0.08), 0 4px 12px rgba(32, 20, 80, 0.05);
+  --radius: 1.25rem;
+
+  --shadow-ambient: 0 1px 2px rgba(45, 40, 32, 0.05);
+  --shadow-soft: 0 6px 22px rgba(45, 40, 32, 0.06), 0 2px 8px rgba(45, 40, 32, 0.04);
+  --shadow-elev: 0 14px 36px rgba(45, 40, 32, 0.08), 0 4px 14px rgba(45, 40, 32, 0.05);
 
   /* レイアウト用トークン（ヘッダー/ナビの挙動を一本化） */
-  --header-blur: 18px;
+  --header-blur: 22px;
+  --header-frost: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--background) 78%, white) 0%,
+    color-mix(in oklab, var(--background) 38%, transparent) 72%,
+    transparent 100%
+  );
   --nav-float-inset: 0.75rem;   /* 12px */
   --nav-float-radius: 1.5rem;   /* 24px (rounded-2xl より丸め) */
-  --nav-height: 4rem;           /* 64px */
+  --nav-height: 4.5rem;         /* 72px — 中央FAB余白 */
   --hairline: rgba(255, 255, 255, 0.55);
+  /* 浮遊シェル：境界は彩度ゼロ寄り。影は深紫ではなくニュートラル */
+  --shell-border: color-mix(in oklab, var(--foreground) 6%, white);
+  --shell-shadow-outer: 0 8px 40px rgba(38, 32, 26, 0.07);
+  --shell-shadow-inner: inset 0 1px 0 rgba(255, 255, 255, 0.58);
+  --shell-nav-bg: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--background) 55%, white) 0%,
+    color-mix(in oklab, var(--background) 22%, white) 100%
+  );
 
-  --sidebar: oklch(0.98 0.005 280);
-  --sidebar-foreground: oklch(0.2 0.02 280);
-  --sidebar-primary: oklch(0.74 0.1 280);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.95 0.01 280);
-  --sidebar-accent-foreground: oklch(0.2 0.02 280);
-  --sidebar-border: oklch(0.92 0.01 280);
-  --sidebar-ring: oklch(0.74 0.1 280);
+  /* AppBackground — 暖色ペーパー＋セージ主光源 */
+  --bg-ink: oklch(0.28 0.012 75);
+  --bg-paper-top: oklch(0.99 0.005 88);
+  --bg-paper-mid: oklch(0.978 0.009 82);
+  --bg-paper-veil: oklch(0.97 0.01 78);
+  --bg-paper-bot: oklch(0.958 0.012 80);
+  --bg-ambient-lt: oklch(0.965 0.014 95);
+  --bg-ambient-rb: oklch(0.94 0.018 75);
+  --bg-orb-bloom: oklch(0.88 0.045 150);
+  --bg-orb-core: oklch(0.95 0.02 140);
+  --bg-horizon-mist: color-mix(in oklab, var(--foreground) 1.4%, transparent);
+  --bg-primary-mist: color-mix(in oklab, var(--primary) 5.2%, transparent);
+  /* 円形ヴィネット中心の「抜け」— 大きいほど高級感（展示壁のような視線集約） */
+  --bg-vignette-lift: 38%;
+  --bg-vignette-spread: 120% 98%;
+  --bg-vignette-ink-amount: 3.6%;
+  /* 左右リム＋床の影。無彩。ガラス UI の枠に同期 */
+  --bg-rim: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--bg-ink) 2.4%, transparent) 0%,
+    transparent 9%,
+    transparent 91%,
+    color-mix(in oklab, var(--bg-ink) 2.1%, transparent) 100%
+  );
+  --bg-floor-ink: color-mix(in oklab, var(--bg-ink) 1.9%, transparent);
+
+  --sidebar: oklch(0.98 0.006 88);
+  --sidebar-foreground: oklch(0.3 0.015 75);
+  --sidebar-primary: oklch(0.6 0.055 150);
+  --sidebar-primary-foreground: oklch(0.99 0.005 90);
+  --sidebar-accent: oklch(0.95 0.01 85);
+  --sidebar-accent-foreground: oklch(0.3 0.015 75);
+  --sidebar-border: oklch(0.9 0.01 80);
+  --sidebar-ring: oklch(0.6 0.055 150);
 }
 
 @layer base {
@@ -118,7 +171,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground text-[15px] font-normal leading-relaxed antialiased;
   }
   html {
     @apply font-sans;
@@ -150,12 +203,24 @@
       var(--shadow-soft);
   }
 
-  /* 極薄ノイズ（紙/塗装感）。opacity は 2.5% 前後 */
+  /* 極薄ノイズ（紙/塗装感）— 彩度の塊より質感 */
   .noise-layer {
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
-    background-size: 240px 240px;
-    opacity: 0.028;
+    background-size: 220px 220px;
+    opacity: 0.02;
     mix-blend-mode: multiply;
+  }
+
+  .shell-surface {
+    background: var(--header-frost);
+    backdrop-filter: blur(var(--header-blur)) saturate(1.12);
+  }
+
+  .shell-floating {
+    border: 1px solid var(--shell-border);
+    background: var(--shell-nav-bg);
+    box-shadow: var(--shell-shadow-inner), var(--shell-shadow-outer);
+    backdrop-filter: blur(28px) saturate(1.08);
   }
 
   /* 極ゆっくり流れる光の円（1要素限定） */
@@ -170,6 +235,43 @@
   }
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .chip-moss {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-medium;
+    background: color-mix(in oklab, var(--mono-moss) 16%, white);
+    color: color-mix(in oklab, var(--mono-ink) 78%, var(--mono-moss));
+  }
+  .chip-sage {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-medium;
+    background: color-mix(in oklab, var(--mono-sage) 12%, white);
+    color: color-mix(in oklab, var(--mono-sage) 90%, var(--mono-ink));
+  }
+  .chip-sand {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-medium;
+    background: color-mix(in oklab, var(--mono-sand) 18%, white);
+    color: color-mix(in oklab, var(--mono-ink) 72%, var(--mono-sand));
+  }
+  .chip-blush {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-medium;
+    background: color-mix(in oklab, var(--mono-blush) 14%, white);
+    color: color-mix(in oklab, var(--mono-ink) 70%, var(--mono-blush));
+  }
+  .chip-linen {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-medium;
+    background: color-mix(in oklab, var(--mono-linen) 20%, white);
+    color: color-mix(in oklab, var(--mono-ink) 75%, var(--mono-linen));
+  }
+
+  /* 縦書き short冊: 枠いっぱいの幅だと字がブロック開始側に寄るため、字列幅に縮めて中央へ */
+  .tanzaku-vertical-input {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    width: max-content;
+    max-width: min(100%, 14rem);
+    margin-inline: auto;
+    text-align: center;
+    field-sizing: content;
   }
 }
 
