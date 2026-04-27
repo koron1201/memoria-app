@@ -25,7 +25,7 @@ type AnimalConfig = {
   sub: string;
   traits: { name: string; score: number }[];
 };
-
+// 動物ごとの設定データ（名前、3Dモデルのパス、アクセントカラー、サブテキスト、性格特性のスコア）
 const ANIMAL_CONFIGS: Record<string, AnimalConfig> = {
   lion: {
     name: "情熱的なライオン",
