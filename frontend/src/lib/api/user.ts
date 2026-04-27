@@ -7,6 +7,8 @@
  */
 
 import { APP_LS, clearEntireClientAppState } from "@/lib/app-local-storage";
+// 🌟 修正点1: Supabaseクライアントをインポートする
+import { supabase } from "@/lib/supabase";
 
 export interface UserProfile {
   displayName: string;
@@ -60,7 +62,7 @@ function safeWrite<T>(key: string, value: T) {
 function normalizeProfile(raw: Partial<UserProfile> & Record<string, unknown>): UserProfile {
   return {
     displayName:
-      typeof raw.displayName === "string" ? raw.displayName : defaultProfile.displayName,
+        typeof raw.displayName === "string" ? raw.displayName : defaultProfile.displayName,
     email: raw.email ?? null,
     joinedAt: raw.joinedAt ?? null,
     avatarUrl: typeof raw.avatarUrl === "string" ? raw.avatarUrl : null,
@@ -68,7 +70,7 @@ function normalizeProfile(raw: Partial<UserProfile> & Record<string, unknown>): 
 }
 
 function normalizeNotifications(
-  raw: Partial<NotificationPrefs> & Record<string, unknown>,
+    raw: Partial<NotificationPrefs> & Record<string, unknown>,
 ): NotificationPrefs {
   return {
     push: typeof raw.push === "boolean" ? raw.push : defaultNotifications.push,
@@ -81,12 +83,33 @@ const notifFallback = defaultNotifications as NotificationPrefs & Record<string,
 
 export const userApi = {
   async getProfile(): Promise<UserProfile> {
-    const merged = {
-      ...defaultProfile,
-      ...safeRead<UserProfile & Record<string, unknown>>(PROFILE_KEY, profileFallback),
-    };
+    // 🌟 修正点2: まずローカルのデータを読み込む
+    const localData = safeRead<UserProfile & Record<string, unknown>>(PROFILE_KEY, profileFallback);
+
+    // 🌟 修正点3: Supabaseからログイン中のユーザー情報を取得する
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (user) {
+      // ログイン済みの場合：Googleの情報とローカル情報をうまくミックスする
+      const isDefaultName = !localData.displayName || localData.displayName === defaultProfile.displayName;
+
+      return normalizeProfile({
+        // プロフィール編集で名前を変えていなければ、Googleアカウントの名前を使う
+        displayName: isDefaultName ? (user.user_metadata?.full_name || "ユーザー") : localData.displayName,
+        // Googleのメールアドレスを表示
+        email: user.email || null,
+        // アカウント作成日を表示（yyyy/mm/dd の形式などに変換）
+        joinedAt: user.created_at ? new Date(user.created_at).toLocaleDateString("ja-JP") : null,
+        // 自分で画像をアップロードしていなければ、Googleのアイコンを使う
+        avatarUrl: localData.avatarUrl || user.user_metadata?.avatar_url || null,
+      });
+    }
+
+    // 未ログイン（ゲストユーザー）の場合
+    const merged = { ...defaultProfile, ...localData };
     return normalizeProfile(merged);
   },
+
   async updateProfile(patch: Partial<UserProfile>): Promise<UserProfile> {
     const next = normalizeProfile({
       ...defaultProfile,
@@ -96,6 +119,7 @@ export const userApi = {
     safeWrite(PROFILE_KEY, next);
     return next;
   },
+
   async getNotifications(): Promise<NotificationPrefs> {
     const merged = {
       ...defaultNotifications,
@@ -103,8 +127,9 @@ export const userApi = {
     };
     return normalizeNotifications(merged);
   },
+
   async updateNotifications(
-    patch: Partial<NotificationPrefs>,
+      patch: Partial<NotificationPrefs>,
   ): Promise<NotificationPrefs> {
     const next = normalizeNotifications({
       ...defaultNotifications,
@@ -114,6 +139,7 @@ export const userApi = {
     safeWrite(NOTIF_KEY, next);
     return next;
   },
+
   clearLocalData(): void {
     if (typeof window === "undefined") return;
     try {
@@ -123,10 +149,12 @@ export const userApi = {
       // ignore
     }
   },
+
   /**
-   * ログアウト用：オンボーディング完了フラグ・プロフィール・通知・アップロード一時データを消去
+   * 🌟 修正点4: ログアウト時にSupabase側も確実にサインアウトさせる
    */
-  signOutClient(): void {
+  async signOutClient(): Promise<void> {
+    await supabase.auth.signOut();
     clearEntireClientAppState();
   },
 };
