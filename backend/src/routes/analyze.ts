@@ -34,15 +34,16 @@ router.post('/', async (c) => {
     const fileName = `${Date.now()}_${imageFile.name}`;
     const filePath = `uploads/${fileName}`;
 
-    const { data: storageData, error: storageError } = await supabase.storage
-      .from('memories') // 作成したバケット名
+    // data: storageData を削除し、error だけを取得するようにします
+    const { error: storageError } = await supabase.storage
+      .from('memories')
       .upload(filePath, buffer, {
         contentType: imageFile.type,
       });
 
     if (storageError) {
-      console.error("Storage Error:", storageError);
-      throw new Error("画像のアップロードに失敗しました");
+        console.error("Storage Error:", storageError);
+        throw new Error("画像のアップロードに失敗しました");
     }
 
     // 公開URLを取得 (ここで publicUrl を定義します)

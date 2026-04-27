@@ -2,132 +2,142 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase";
-import { PageHeader } from "@/components/page-header";
+import { AppHeader } from "@/components/app-header";
 import { GlassCard } from "@/components/glass-card";
-import { Button } from "@/components/ui/button";
 import { pageTransition } from "@/lib/motion";
 
-// 動物データの定義
-const ANIMAL_CONFIGS: Record<string, { name: string; emoji: string; sub: string; traits: { name: string; score: number }[] }> = {
-  lion: {
-    name: "情熱的なライオン",
-    emoji: "🦁",
-    sub: "〜 誇り高きリーダー 〜",
-    traits: [{ name: "好奇心", score: 5 }, { name: "社交性", score: 4 }, { name: "冒険心", score: 5 }, { name: "繊細さ", score: 2 }, { name: "マイペース", score: 3 }]
-  },
-  rabbit: {
-    name: "思慮深いウサギ",
-    emoji: "🐰",
-    sub: "〜 穏やかな観察者 〜",
-    traits: [{ name: "好奇心", score: 3 }, { name: "社交性", score: 3 }, { name: "冒険心", score: 2 }, { name: "繊細さ", score: 5 }, { name: "マイペース", score: 4 }]
-  },
-  cat: {
-    name: "気まぐれネコ",
-    emoji: "🐱",
-    sub: "〜 自由を愛する冒険家 〜",
-    traits: [{ name: "好奇心", score: 4 }, { name: "社交性", score: 2 }, { name: "冒険心", score: 5 }, { name: "繊細さ", score: 3 }, { name: "マイペース", score: 5 }]
-  },
-  bear: {
-    name: "穏やかなクマ",
-    emoji: "🐻",
-    sub: "〜 包容力のカタマリ 〜",
-    traits: [{ name: "好奇心", score: 2 }, { name: "社交性", score: 4 }, { name: "冒険心", score: 2 }, { name: "繊細さ", score: 4 }, { name: "マイペース", score: 4 }]
-  },
-  fox: {
-    name: "好奇心旺盛なキツネ",
-    emoji: "🦊",
-    sub: "〜 知恵ある探求者 〜",
-    traits: [{ name: "好奇心", score: 5 }, { name: "社交性", score: 3 }, { name: "冒険心", score: 4 }, { name: "繊細さ", score: 3 }, { name: "マイペース", score: 3 }]
-  },
-};
+export type MemoryAnimalId = "lion" | "rabbit" | "cat" | "bear" | "fox";
 
-export default function AnimalCardPage() {
+// 表示用の型定義
+interface Memory {
+  id: string | number;
+  date: string;
+  animalId: MemoryAnimalId;
+  diaryText: string;
+  imageUrl: string;
+  emotion: string;
+}
+
+// 動物データの定義
+const MEMORY_ANIMALS = [
+  { id: "lion", label: "情熱的なライオン", emoji: "🦁", accent: "#D4847A" },
+  { id: "rabbit", label: "思慮深いウサギ", emoji: "🐰", accent: "#C9A87C" },
+  { id: "cat", label: "自由なネコ", emoji: "🐱", accent: "#9BB5A5" },
+  { id: "bear", label: "穏やかなクマ", emoji: "🐻", accent: "#6B8F7A" },
+  { id: "fox", label: "好奇心旺盛なキツネ", emoji: "🦊", accent: "#C4B59A" },
+];
+
+function getLocalAnimal(id: string) {
+  return MEMORY_ANIMALS.find((a) => a.id === id) || MEMORY_ANIMALS[2];
+}
+
+export default function AnalysisResultPage() {
   const params = useParams();
   const router = useRouter();
-  const id = params?.id as string; // URLの末尾（例: 5）を取得
-
-  const [memory, setMemory] = useState<any>(null);
+  const id = params?.id as string;
+  
+  // useState<any> を <Memory | null> に修正
+  const [memory, setMemory] = useState<Memory | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchMemory = async () => {
+    const fetchLatestMemory = async () => {
       if (!id) return;
       
-      // Supabaseからデータを取得
-      const { data, error } = await supabase
-        .from("memories")
-        .select("*")
-        .eq("id", id)
-        .single();
+      try {
+        const { data: dbData, error } = await supabase
+          .from("memories")
+          .select("*")
+          .eq("id", id)
+          .single();
 
-      if (error) {
-        console.error("Error fetching memory:", error);
-      } else {
-        setMemory(data);
+        if (error) {
+          console.error("Error fetching latest memory:", error.message);
+        } else if (dbData) {
+          setMemory({
+            id: dbData.id,
+            date: new Date(dbData.created_at).toLocaleDateString("ja-JP", {
+              month: "long", day: "numeric",
+            }),
+            animalId: dbData.animal_id as MemoryAnimalId,
+            diaryText: dbData.diary_text || "",
+            imageUrl: dbData.image_url,
+            emotion: dbData.emotion || "おだやか",
+          });
+        }
+      } catch (err) {
+        // catch (error: any) を避けるため、err として受け取る
+        console.error("Unexpected error:", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
-
-    fetchMemory();
+    fetchLatestMemory();
   }, [id]);
 
-  if (loading) return <div className="flex min-h-screen items-center justify-center bg-mono-cream/20">カードを生成中...</div>;
-  if (!memory) return <div className="flex min-h-screen items-center justify-center bg-mono-cream/20">データが見つかりませんでした。</div>;
+  if (loading) return <div className="flex min-h-screen items-center justify-center bg-mono-cream/20 font-serif opacity-50">AIが言葉を綴っています...</div>;
+  if (!memory) return <div className="flex min-h-screen items-center justify-center bg-mono-cream/20">思い出が見つかりませんでした。</div>;
 
-  // animal_id に基づいて設定を取得（なければネコをデフォルトに）
-  const config = ANIMAL_CONFIGS[memory.animal_id] || ANIMAL_CONFIGS.cat;
+  const animal = getLocalAnimal(memory.animalId);
 
   return (
-    <motion.div {...pageTransition}>
-      <PageHeader title="動物カード" showBack />
+    <motion.div {...pageTransition} className="relative min-h-screen pb-12">
+      <motion.div
+        className="pointer-events-none fixed inset-0 -z-20"
+        style={{
+          background: `radial-gradient(94% 62% at 50% 11%, color-mix(in oklab, ${animal.accent} 12%, transparent) 0%, transparent 64%)`,
+        }}
+      />
 
-      <div className="flex flex-col items-center gap-5 px-5 pt-6">
-        <GlassCard className="w-full max-w-sm bg-gradient-to-br from-mono-moss/12 to-mono-cream/35 text-center">
-          {/* 動物イラスト */}
-          <div className="mx-auto flex size-28 items-center justify-center rounded-[1.75rem] bg-gradient-to-br from-primary/15 to-mono-sand/25">
-            <span className="text-6xl">{config.emoji}</span>
+      <AppHeader date={memory.date} eyebrow="AI 解析完了" />
+
+      <div className="mx-auto flex w-full max-w-sm flex-col gap-6 px-5 pt-4">
+        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[1.75rem] shadow-elev ring-1 ring-white/45">
+          <Image src={memory.imageUrl} alt="Analyzed" fill className="object-cover" unoptimized />
+        </div>
+
+        <GlassCard className="p-5 shadow-soft">
+          <div className="mb-3 flex items-center gap-2 border-b border-mono-ink/5 pb-2">
+            <span className="text-2xl">{animal.emoji}</span>
+            <p className="text-[10px] font-bold tracking-[0.2em] text-primary/70 uppercase">AI Diary</p>
           </div>
-
-          <h2 className="mt-4 text-xl font-bold">{config.name}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">{config.sub}</p>
-
-          {/* 性格特性 */}
-          <div className="mt-5 space-y-2.5">
-            {config.traits.map((trait) => (
-              <div key={trait.name} className="flex items-center gap-3">
-                <span className="w-20 text-right text-xs text-muted-foreground">{trait.name}</span>
-                <div className="flex gap-0.5">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <span
-                      key={i}
-                      className={`text-sm transition-transform ${i < trait.score ? "text-mono-sand scale-105" : "text-muted-foreground/30"}`}
-                    >
-                      ★
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* 感情メモ */}
-          <div className="mt-5 rounded-xl bg-white/40 p-3 text-left">
-            <p className="text-xs text-muted-foreground">この思い出の気分</p>
-            <p className="mt-1 text-sm font-medium">
-              「{memory.emotion || "おだやか"}」
-            </p>
-          </div>
+          <p className="text-sm leading-relaxed text-mono-ink/90 italic indent-4">{memory.diaryText}</p>
         </GlassCard>
 
-        <Button
-          onClick={() => router.push("/memory")}
-          className="h-12 w-full max-w-sm rounded-2xl bg-primary text-base font-medium text-primary-foreground shadow-soft hover:bg-primary/90"
-          size="lg"
-        >
-          📤 アルバムへ戻る
-        </Button>
+        {/* 感情タグ */}
+        <div className="flex flex-wrap justify-center gap-2.5 opacity-80">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-white/40 px-4 py-1 text-[11px] font-medium text-mono-ink backdrop-blur-md">
+            <span className="size-1.5 rounded-full" style={{ background: animal.accent }} />
+            {animal.label}
+          </span>
+          <span className="inline-flex items-center rounded-full border border-white/30 bg-black/5 px-4 py-1 text-[11px] italic text-mono-ink/60">
+            # {memory.emotion}
+          </span>
+        </div>
+
+        {/* アクションボタン */}
+        <div className="mt-4 flex flex-col gap-4">
+          <div className="text-center">
+            <p className="text-[10px] text-muted-foreground mb-3">✨ この思い出はアルバムに安全に保管されました</p>
+            <button
+              onClick={() => router.push(`/animal-card/${memory.id}`)}
+              className="h-14 w-full rounded-2xl bg-mono-ink text-white shadow-xl hover:bg-mono-ink/90 transition-all active:scale-[0.97] flex items-center justify-center gap-2 group"
+            >
+              <span className="font-bold">診断カードを受け取る</span>
+              <span className="text-lg group-hover:translate-x-1 transition-transform">🃏</span>
+            </button>
+          </div>
+
+          <button
+            onClick={() => router.push("/memory")}
+            className="text-xs text-mono-ink/50 underline decoration-mono-ink/20 hover:text-mono-ink transition-colors"
+          >
+            カードを見ずにアルバムへ戻る
+          </button>
+        </div>
       </div>
     </motion.div>
   );
