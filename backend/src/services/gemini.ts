@@ -14,7 +14,7 @@ const schema = {
     },
     animalId: { 
       type: SchemaType.STRING as const, 
-      description: "cat(自由), rabbit(繊細), lion(活発), bear(穏やか), fox(好奇心) のいずれか一つ" 
+      description: "cat(自由), rabbit(繊細), penguin(愛らしい), bear(穏やか), fox(好奇心) のいずれか一つ" 
     },
     diaryText: { 
       type: SchemaType.STRING as const, 
@@ -56,7 +56,7 @@ export async function analyzeMemory(imageBuffer: Buffer, userText: string, mimeT
     2. 入力内容の雰囲気から、以下の【動物リスト】の中から、最も適した「animalId」を**必ず1つだけ**選択してください。
 
     【動物リスト（animalIdとして使用する英単語）】
-    - lion    （情熱的、誇り、リーダーシップを感じる時）
+    - penguin    (愛らしい、社交的、ムードメーカー、みんなを楽しませている時)
     - rabbit  （思慮深い、穏やか、繊細、静かな時間を過ごしている時）
     - cat     （気まぐれ、自由、冒険心、自分らしくいたい時）
     - bear    （穏やか、包容力、ゆったりとした安心感がある時）
@@ -64,7 +64,7 @@ export async function analyzeMemory(imageBuffer: Buffer, userText: string, mimeT
 
     【出力ルール】
     ・必ず指定されたJSON形式で出力してください。
-    ・animalId フィールドには、上記のリストにある **lion, rabbit, cat, bear, fox のいずれか1つ**を、引用符なしの英単語のみで入れてください。
+    ・animalId フィールドには、上記のリストにある **penguin, rabbit, cat, bear, fox のいずれか1つ**を、引用符なしの英単語のみで入れてください。
   `;
 
   try {

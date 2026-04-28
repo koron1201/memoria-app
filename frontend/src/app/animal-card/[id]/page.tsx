@@ -27,16 +27,16 @@ type AnimalConfig = {
 };
 // 動物ごとの設定データ（名前、3Dモデルのパス、アクセントカラー、サブテキスト、性格特性のスコア）
 const ANIMAL_CONFIGS: Record<string, AnimalConfig> = {
-  lion: {
-    name: "情熱的なライオン",
-    glb: "/models/animals/lion.glb", // ← animals (複数形) に修正
-    accent: "#ff9f43",
-    sub: "〜 誇り高きリーダー 〜",
-    traits: [{ name: "好奇心", score: 5 }, { name: "社交性", score: 4 }, { name: "冒険心", score: 5 }, { name: "繊細さ", score: 2 }, { name: "マイペース", score: 3 }]
+  penguin: {
+    name: "愛らしいペンギン",
+    glb: "/models/animals/penguin.glb", // ← animals (複数形) に修正
+    accent: "#00a8ff",
+    sub: "〜 皆んなのムードメーカー 〜",
+    traits: [{ name: "好奇心", score: 4 }, { name: "社交性", score: 5 }, { name: "冒険心", score: 3 }, { name: "繊細さ", score: 2 }, { name: "マイペース", score: 3 }]
   },
   rabbit: {
     name: "思慮深いウサギ",
-    glb: "/models/animals/rabbit.glb", // ← animals (複数形) に修正
+    glb: "/models/animals/rat.glb", // ← animals (複数形) に修正
     accent: "#fab1a0",
     sub: "〜 穏やかな観察者 〜",
     traits: [{ name: "好奇心", score: 3 }, { name: "社交性", score: 3 }, { name: "冒険心", score: 2 }, { name: "繊細さ", score: 5 }, { name: "マイペース", score: 4 }]
