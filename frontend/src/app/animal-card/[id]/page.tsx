@@ -27,40 +27,47 @@ type AnimalConfig = {
 };
 // 動物ごとの設定データ（名前、3Dモデルのパス、アクセントカラー、サブテキスト、性格特性のスコア）
 const ANIMAL_CONFIGS: Record<string, AnimalConfig> = {
-  penguin: {
-    name: "愛らしいペンギン",
-    glb: "/models/animals/penguin.glb", // ← animals (複数形) に修正
-    accent: "#00a8ff",
-    sub: "〜 皆んなのムードメーカー 〜",
-    traits: [{ name: "好奇心", score: 4 }, { name: "社交性", score: 5 }, { name: "冒険心", score: 3 }, { name: "繊細さ", score: 2 }, { name: "マイペース", score: 3 }]
-  },
-  rabbit: {
-    name: "思慮深いウサギ",
-    glb: "/models/animals/rat.glb", // ← animals (複数形) に修正
-    accent: "#fab1a0",
-    sub: "〜 穏やかな観察者 〜",
-    traits: [{ name: "好奇心", score: 3 }, { name: "社交性", score: 3 }, { name: "冒険心", score: 2 }, { name: "繊細さ", score: 5 }, { name: "マイペース", score: 4 }]
-  },
   cat: {
     name: "気まぐれネコ",
-    glb: "/models/animals/cat.glb", // ← animals (複数形) に修正
+    glb: "/models/animals/cat.glb",
     accent: "#81ecec",
     sub: "〜 自由を愛する冒険家 〜",
     traits: [{ name: "好奇心", score: 4 }, { name: "社交性", score: 2 }, { name: "冒険心", score: 5 }, { name: "繊細さ", score: 3 }, { name: "マイペース", score: 5 }]
   },
   bear: {
     name: "穏やかなクマ",
-    glb: "/models/animals/bear.glb", // ← animals (複数形) に修正
+    glb: "/models/animals/bear.glb",
     accent: "#a29bfe",
-    sub: "〜 包容力のカタマリ 〜",
-    traits: [{ name: "好奇心", score: 2 }, { name: "社交性", score: 4 }, { name: "冒険心", score: 2 }, { name: "繊細さ", score: 4 }, { name: "マイペース", score: 4 }]
+    sub: "〜 すべてを包み込む優しさ 〜",
+    traits: [{ name: "好奇心", score: 2 }, { name: "社交性", score: 4 }, { name: "冒険心", score: 2 }, { name: "繊細さ", score: 4 }, { name: "マイペース", score: 5 }]
   },
   fox: {
     name: "好奇心旺盛なキツネ",
-    glb: "/models/animals/fox.glb", // ← animals (複数形) に修正
+    glb: "/models/animals/fox.glb",
     accent: "#ffeaa7",
-    sub: "〜 知恵ある探求者 〜",
+    sub: "〜 知恵と変化を楽しむ探求者 〜",
     traits: [{ name: "好奇心", score: 5 }, { name: "社交性", score: 3 }, { name: "冒険心", score: 4 }, { name: "繊細さ", score: 3 }, { name: "マイペース", score: 3 }]
+  },
+  mouse: {
+    name: "繊細なネズミ",
+    glb: "/models/animals/rat.glb", // ファイル名がrat.glbであることを確認
+    accent: "#fab1a0",
+    sub: "〜 小さな変化に気づく感受性 〜",
+    traits: [{ name: "好奇心", score: 3 }, { name: "社交性", score: 2 }, { name: "冒険心", score: 1 }, { name: "繊細さ", score: 5 }, { name: "マイペース", score: 4 }]
+  },
+  dog: { 
+    name: "親しみ深いイヌ",
+    glb: "/models/animals/dog.glb",
+    accent: "#fdcb6e",
+    sub: "〜 誰にでも寄り添うパートナー 〜",
+    traits: [{ name: "好奇心", score: 3 }, { name: "社交性", score: 5 }, { name: "冒険心", score: 4 }, { name: "繊細さ", score: 2 }, { name: "マイペース", score: 2 }]
+  },
+  penguin: {
+    name: "愛らしいペンギン",
+    glb: "/models/animals/penguin.glb",
+    accent: "#00a8ff",
+    sub: "〜 皆を笑顔にするムードメーカー 〜",
+    traits: [{ name: "好奇心", score: 4 }, { name: "社交性", score: 5 }, { name: "冒険心", score: 3 }, { name: "繊細さ", score: 2 }, { name: "マイペース", score: 3 }]
   },
 };
 
