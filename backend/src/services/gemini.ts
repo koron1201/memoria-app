@@ -14,7 +14,7 @@ const schema = {
     },
     animalId: { 
       type: SchemaType.STRING as const, 
-      description: "cat(自由), rabbit(繊細), lion(活発), bear(穏やか), fox(好奇心) のいずれか一つ" 
+      description: "cat(自由), bear(穏やか), fox(好奇心), mouse(寂しい), dog(親しみ), penguin(愛らしい) のいずれか一つ"
     },
     diaryText: { 
       type: SchemaType.STRING as const, 
@@ -52,19 +52,20 @@ export async function analyzeMemory(imageBuffer: Buffer, userText: string, mimeT
     ・ユーザーの短いメモ: 「${userText}」
 
     【あなたの任務】
-    1. ユーザーのメモを素材に、200文字程度の【全く新しい日記】を一人称で創作してください。メモをそのまま出力せず、写真の色彩や雰囲気から読み取った感情をエモく膨らませてください。
-    2. 入力内容の雰囲気から、以下の【動物リスト】の中から、最も適した「animalId」を**必ず1つだけ**選択してください。
+    1. ユーザーのメモを素材に、200文字程度の日記を一人称で創作してください。写真の色彩や雰囲気から感情をエモく膨らませてください。
+    2. 以下の【動物リスト】の中から、最も適した「animalId」を**必ず1つだけ**選択してください。
 
-    【動物リスト（animalIdとして使用する英単語）】
-    - lion    （情熱的、誇り、リーダーシップを感じる時）
-    - rabbit  （思慮深い、穏やか、繊細、静かな時間を過ごしている時）
-    - cat     （気まぐれ、自由、冒険心、自分らしくいたい時）
-    - bear    （穏やか、包容力、ゆったりとした安心感がある時）
-    - fox     （好奇心旺盛、知恵、何か新しいものを探求している時）
+    【動物リスト（animalId）】
+    - cat     （自由、気まぐれ、冒険心、自分らしくいたい時）
+    - bear    （穏やか、包容力、安心感、ゆったりしている時）
+    - fox     （好奇心旺盛、知恵、探求、何か新しい発見がある時）
+    - mouse   （寂しい、不安、繊細、静かに寄り添ってほしい時）
+    - dog     （親しみ、信頼、パートナーシップ、誰かと一緒にいたい時）
+    - penguin （愛らしい、ムードメーカー、社交的、みんなを笑顔にしたい時）
 
     【出力ルール】
     ・必ず指定されたJSON形式で出力してください。
-    ・animalId フィールドには、上記のリストにある **lion, rabbit, cat, bear, fox のいずれか1つ**を、引用符なしの英単語のみで入れてください。
+    ・animalId には英単語（cat, bear, fox, mouse, dog, penguin）のみを入れてください。
   `;
 
   try {
