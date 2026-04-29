@@ -4,7 +4,6 @@
  * 上端：ニュートラルな霧＋低コントラスト境界。
  * ブランド表記は字間重視（大文字太チップ化を避ける）
  */
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 export interface AppHeaderProps {
@@ -37,13 +36,6 @@ export function AppHeader({ date, eyebrow }: AppHeaderProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <Image
-              src="/logo.png"
-              alt="MEMORIA"
-              width={32}
-              height={32}
-              className="shrink-0 rounded-full shadow-soft ring-1 ring-white/60"
-            />
             <span
               className={cn(
                 "text-[1.05rem] font-bold leading-none tracking-[0.12em] text-mono-ink",
