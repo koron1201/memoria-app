@@ -92,9 +92,9 @@ function FeaturedStory({ memory, tags }: { memory: Memory; tags: string[] }) {
               </p>
             </div>
             <div className="mt-2.5 flex flex-wrap gap-1.5">
-              {tags.slice(0, 3).map((t) => (
+              {tags.slice(0, 3).map((t, index) => (
                 <span
-                  key={t}
+                  key={`${t}-${index}`}
                   className="inline-flex items-center rounded-full border border-white/50 bg-white/35 px-2.5 py-0.5 text-[10px] font-medium text-mono-ink/90 backdrop-blur-sm"
                 >
                   {t}
@@ -577,9 +577,9 @@ function MemoryCard({
                 {memory.meta}
               </span>
             )}
-            {memory.tags.map((t) => (
+            {memory.tags.map((t, index) => (
               <span
-                key={t}
+                key={`${t}-${index}`}
                 className="inline-flex rounded-full border border-amber-900/14 bg-mono-cream/55 px-2 py-0.5 text-[10px] font-medium text-[#4a3f34]"
               >
                 {t}
