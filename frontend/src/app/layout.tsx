@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Noto_Sans_JP, Noto_Serif_JP } from "next/font/google";
 import "./globals.css";
 import { AppBackground } from "@/components/app-background";
-import { BottomNav } from "@/components/bottom-nav";
+import { AppShell } from "@/components/app-shell";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -47,16 +47,7 @@ export default function RootLayout({
         style={{ fontFamily: '"Noto Sans JP", "Inter", system-ui, sans-serif' }}
       >
         <AppBackground />
-        <main
-          className="flex-1"
-          style={{
-            paddingBottom:
-              "calc(var(--nav-height) + var(--nav-float-inset) + env(safe-area-inset-bottom) + 1.25rem)",
-          }}
-        >
-          {children}
-        </main>
-        <BottomNav />
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );
