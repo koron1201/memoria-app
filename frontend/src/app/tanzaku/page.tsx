@@ -225,7 +225,7 @@ export default function TanzakuPage() {
                   initial={{ opacity: 0, y: 8, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 6, scale: 0.98 }}
-                  className="absolute right-0 top-[4.6rem] z-30 w-[19.5rem] max-w-[calc(100vw-2.5rem)] rounded-[1.35rem] border border-white/65 bg-[#fffaf1]/95 p-3 shadow-[0_24px_70px_rgba(64,45,24,0.20),inset_0_1px_0_rgba(255,255,255,0.86)] backdrop-blur-xl"
+                  className="absolute right-0 top-[4.6rem] z-30 w-[19.5rem] max-w-[calc(100vw-2.5rem)] rounded-[1.35rem] border border-white/65 bg-[#fffaf1]/95 p-3 shadow-[0_24px_70px_rgba(64,45,24,0.20),inset_0_1px_0_rgba(255,255,255,0.86)] backdrop-blur-xl sm:left-[calc(100%+0.75rem)] sm:right-auto sm:top-[-265px]"
                 >
                   <div className="flex items-center justify-between px-1 pb-2">
                     <button type="button" onClick={() => moveCalendarMonth(-1)} className="grid size-8 place-content-center rounded-full text-mono-ink/60 hover:bg-white/70" aria-label="前の月">

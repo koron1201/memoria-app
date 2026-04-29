@@ -19,8 +19,14 @@ export type TanzakuWish = {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
 
+function apiUrl(path: string) {
+  const base = API_BASE.replace(/\/+$/, "");
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${base}${normalizedPath}`;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(apiUrl(path), {
     ...init,
     headers: {
       "Content-Type": "application/json",

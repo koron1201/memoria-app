@@ -69,9 +69,11 @@ export default function RoadmapPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const router = useRouter();
   const [wish, setWish] = useState<TanzakuWish | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [savingSteps, setSavingSteps] = useState(false);
+  const [savingReflection, setSavingReflection] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reflection, setReflection] = useState("");
 
@@ -104,7 +106,7 @@ export default function RoadmapPage({
 
   const saveSteps = async (steps: TanzakuStep[]) => {
     if (!wish) return;
-    setSaving(true);
+    setSavingSteps(true);
     setError(null);
     const optimistic = { ...wish, steps };
     setWish(optimistic);
@@ -116,7 +118,7 @@ export default function RoadmapPage({
       setWish(wish);
       setError("進捗を保存できませんでした。");
     } finally {
-      setSaving(false);
+      setSavingSteps(false);
     }
   };
 
@@ -136,7 +138,7 @@ export default function RoadmapPage({
 
   const saveReflection = async () => {
     if (!wish || progressPct < 100) return;
-    setSaving(true);
+    setSavingReflection(true);
     setError(null);
     try {
       const saved = await tanzakuApi.update(wish.id, {
@@ -145,10 +147,11 @@ export default function RoadmapPage({
       });
       setWish(saved);
       setReflection(saved.reflection ?? "");
+      router.push(`/tanzaku/past/${saved.id}`);
     } catch {
       setError("達成した感想を保存できませんでした。");
     } finally {
-      setSaving(false);
+      setSavingReflection(false);
     }
   };
 
@@ -214,7 +217,7 @@ export default function RoadmapPage({
                     {progressPct}%
                   </motion.span>
                 </div>
-                {saving && (
+                {savingSteps && (
                   <p className="mt-2 text-right text-[10px] text-muted-foreground">
                     保存中
                   </p>
@@ -287,7 +290,7 @@ export default function RoadmapPage({
                             <button
                               type="button"
                               onClick={() => saveSteps(moveStep(wish.steps, i, -1))}
-                              disabled={i === 0 || saving}
+                              disabled={i === 0 || savingSteps}
                               className="flex size-7 items-center justify-center rounded-full bg-white/45 text-mono-ink/55 transition-colors hover:bg-white/75 disabled:opacity-25"
                               aria-label="上へ移動"
                             >
@@ -296,7 +299,7 @@ export default function RoadmapPage({
                             <button
                               type="button"
                               onClick={() => saveSteps(moveStep(wish.steps, i, 1))}
-                              disabled={i === wish.steps.length - 1 || saving}
+                              disabled={i === wish.steps.length - 1 || savingSteps}
                               className="flex size-7 items-center justify-center rounded-full bg-white/45 text-mono-ink/55 transition-colors hover:bg-white/75 disabled:opacity-25"
                               aria-label="下へ移動"
                             >
@@ -336,10 +339,10 @@ export default function RoadmapPage({
                       type="button"
                       variant="brand"
                       className="mt-3 h-11 w-full"
-                      disabled={saving}
+                      disabled={savingReflection}
                       onClick={saveReflection}
                     >
-                      感想を保存する
+                      {savingReflection ? "保存中" : "感想を保存する"}
                     </Button>
                   </motion.div>
                 )}
