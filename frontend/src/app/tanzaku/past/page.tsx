@@ -27,7 +27,7 @@ export default function PastTanzakuPage() {
           >
             {PAST_TANZAKU_ITEMS.map((item) => (
               <motion.div key={item.id} variants={cardStagger.item}>
-                <Link href={`/roadmap/${item.id}`} className="block">
+                <Link href={`/tanzaku/past/${item.id}`} className="block">
                   <GlassCard className="bg-mono-paper/55 p-4 transition-transform hover:scale-[1.01]">
                     <p className="text-sm font-medium leading-relaxed text-foreground">
                       {item.text}

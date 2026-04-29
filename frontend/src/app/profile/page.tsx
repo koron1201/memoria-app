@@ -113,7 +113,7 @@ export default function ProfilePage() {
               {profile.displayName}
             </h1>
             <p className="mt-2 text-[11px] tracking-[0.24em] text-muted-foreground/85">
-              MonoLog · MEMBER
+              MEMORIA · MEMBER
             </p>
           </motion.header>
 

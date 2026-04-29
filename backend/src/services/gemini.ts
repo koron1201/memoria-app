@@ -29,7 +29,7 @@ const schema = {
  */
 export async function analyzeMemory(imageBuffer: Buffer, userText: string, mimeType: string) {
   const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-flash-lite",
+    model: "gemini-2.5-flash",
     generationConfig: {
       responseMimeType: "application/json",
       responseSchema: schema,
@@ -68,13 +68,23 @@ export async function analyzeMemory(imageBuffer: Buffer, userText: string, mimeT
     ・animalId には英単語（cat, bear, fox, mouse, dog, penguin）のみを入れてください。
   `;
 
-  try {
-    const result = await model.generateContent([prompt, imagePart]);
-    const response = result.response;
-    return JSON.parse(response.text());
-  } catch (error) {
-    console.error("Gemini Analysis Error:", error);
-    // 【修正】 cause: error を追加して、元のエラー情報を保持する
-    throw new Error("AI解析に失敗しました", { cause: error });
+  const maxRetries = 2;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await model.generateContent([prompt, imagePart]);
+      const response = result.response;
+      return JSON.parse(response.text());
+    } catch (error) {
+      const status = (error as { status?: number })?.status;
+      const shouldRetry = status === 503 && attempt < maxRetries;
+      if (shouldRetry) {
+        const waitMs = 700 * (attempt + 1);
+        await new Promise((resolve) => setTimeout(resolve, waitMs));
+        continue;
+      }
+      console.error("Gemini Analysis Error:", error);
+      throw new Error("AI解析に失敗しました", { cause: error });
+    }
   }
+  throw new Error("AI解析に失敗しました");
 }

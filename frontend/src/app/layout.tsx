@@ -22,7 +22,7 @@ const notoSerifJP = Noto_Serif_JP({
 });
 
 export const metadata: Metadata = {
-  title: "MonoLog",
+  title: "MEMORIA",
   description:
     "思い出を物語に、感情を相棒に、夢をロードマップに。",
 };
