@@ -25,17 +25,35 @@ export default function UploadPage() {
   );
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
+  const [progressPct, setProgressPct] = useState(0);
 
   useEffect(() => {
     if (!isAnalyzing) {
       setStepIndex(0);
+      setProgressPct(0);
       return;
     }
     setStepIndex(0);
-    const t = setInterval(() => {
+    setProgressPct(0);
+    const startedAt = performance.now();
+
+    // ステップを切り替えるタイマー
+    const stepTimer = setInterval(() => {
       setStepIndex((i) => Math.min(i + 1, ANALYSIS_STEPS.length - 1));
     }, 720);
-    return () => clearInterval(t);
+
+    // プログレスを時間ベースで0%から100%まで滑らかに進める
+    const totalDuration = 720 * ANALYSIS_STEPS.length;
+    const tickInterval = 50;
+    const progressTimer = setInterval(() => {
+      const elapsed = performance.now() - startedAt;
+      setProgressPct(Math.min(100, (elapsed / totalDuration) * 100));
+    }, tickInterval);
+
+    return () => {
+      clearInterval(stepTimer);
+      clearInterval(progressTimer);
+    };
   }, [isAnalyzing]);
 
   const clearPhoto = () => {
@@ -83,6 +101,9 @@ export default function UploadPage() {
       if (!res.ok) throw new Error("解析に失敗しました");
 
       const result = await res.json();
+      setProgressPct(100);
+      setStepIndex(ANALYSIS_STEPS.length - 1);
+      await new Promise((resolve) => setTimeout(resolve, 280));
 
       localStorage.setItem(APP_LS.lastAnalysis, JSON.stringify(result));
       if (previewUrl) localStorage.setItem(APP_LS.lastImage, previewUrl);
@@ -136,12 +157,12 @@ export default function UploadPage() {
                   <div
                     className="relative grid size-[4.5rem] shrink-0 place-content-center"
                     style={{
-                      background: `conic-gradient(var(--primary) 68%, color-mix(in oklab, var(--muted) 80%, white) 0)`,
+                      background: `conic-gradient(var(--primary) ${Math.round(progressPct)}%, color-mix(in oklab, var(--muted) 80%, white) 0)`,
                       borderRadius: "9999px",
                     }}
                   >
                     <div className="grid size-14 place-content-center rounded-full bg-mono-paper text-base font-bold tabular-nums text-primary">
-                      68%
+                      {Math.round(progressPct)}%
                     </div>
                   </div>
                 </div>

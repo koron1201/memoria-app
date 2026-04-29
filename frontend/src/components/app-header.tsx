@@ -4,6 +4,7 @@
  * 上端：ニュートラルな霧＋低コントラスト境界。
  * ブランド表記は字間重視（大文字太チップ化を避ける）
  */
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 export interface AppHeaderProps {
@@ -35,19 +36,22 @@ export function AppHeader({ date, eyebrow }: AppHeaderProps) {
             </time>
           </div>
 
-          <div className="flex items-center gap-2.5">
-            <span
-              aria-hidden
-              className="size-9 shrink-0 rounded-full bg-gradient-to-br from-[#e8c4b8] via-mono-moss/90 to-mono-sage shadow-soft ring-1 ring-white/60"
+          <div className="flex items-center gap-2">
+            <Image
+              src="/logo.png"
+              alt="MEMORIA"
+              width={32}
+              height={32}
+              className="shrink-0 rounded-full shadow-soft ring-1 ring-white/60"
             />
             <span
               className={cn(
-                "text-[1.05rem] font-bold leading-none tracking-tight text-mono-ink",
+                "text-[1.05rem] font-bold leading-none tracking-[0.12em] text-mono-ink",
                 "[font-family:var(--font-noto-serif),ui-serif,serif]",
               )}
-              aria-label="MonoLog"
+              aria-label="MEMORIA"
             >
-              MonoLog
+              MEMORIA
             </span>
           </div>
         </div>

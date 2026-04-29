@@ -1,14 +1,29 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { transitions } from "@/lib/motion";
 
-const slides = [
+type Slide =
+  | {
+      image: string;
+      title: string;
+      description: string;
+      gradient: string;
+    }
+  | {
+      emoji: string;
+      title: string;
+      description: string;
+      gradient: string;
+    };
+
+const slides: Slide[] = [
   {
-    emoji: "📷",
+    image: "/onboarding-memory-page.png",
     title: "写真が、思い出の1ページになる",
     description: "日常の何気ない写真とひとことから、\nAIがあなただけの日記を作ります",
     gradient: "from-[#B8A9E8] to-[#F2B5D4]",
@@ -30,6 +45,7 @@ const slides = [
 export default function OnboardingPage() {
   const [current, setCurrent] = useState(0);
   const router = useRouter();
+  const slide = slides[current];
   const isLast = current === slides.length - 1;
 
   const handleNext = () => {
@@ -55,18 +71,32 @@ export default function OnboardingPage() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -60 }}
                 transition={transitions.gentle}
-                className="flex flex-col items-center gap-6 text-center"
+                className="flex w-full flex-col items-center gap-6 text-center"
             >
-              <div
-                  className={`flex size-28 items-center justify-center rounded-3xl bg-gradient-to-br ${slides[current].gradient} shadow-lg`}
-              >
-                <span className="text-5xl">{slides[current].emoji}</span>
-              </div>
+              {"image" in slide ? (
+                <div className="relative aspect-[4/5] w-[min(82vw,22rem)] overflow-hidden rounded-[1.35rem] shadow-elev ring-1 ring-white/55">
+                  <Image
+                    src={slide.image}
+                    alt=""
+                    fill
+                    priority={current === 0}
+                    quality={100}
+                    sizes="(max-width: 640px) 82vw, 22rem"
+                    className="object-cover"
+                  />
+                </div>
+              ) : (
+                <div
+                    className={`flex size-28 items-center justify-center rounded-3xl bg-gradient-to-br ${slide.gradient} shadow-lg`}
+                >
+                  <span className="text-5xl">{slide.emoji}</span>
+                </div>
+              )}
               <h1 className="text-2xl font-bold leading-snug">
-                {slides[current].title}
+                {slide.title}
               </h1>
               <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
-                {slides[current].description}
+                {slide.description}
               </p>
             </motion.div>
           </AnimatePresence>

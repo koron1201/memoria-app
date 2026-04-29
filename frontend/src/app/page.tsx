@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { AppHeader } from "@/components/app-header";
 import { GlassCard } from "@/components/glass-card";
@@ -14,10 +14,11 @@ import {
   type AnimalId,
 } from "@/lib/mood";
 import type { SampleMemory } from "@/lib/sample-memories";
-import { SAMPLE_MEMORIES } from "@/lib/sample-memories";
+import { toHomeMemory, type MemoryRecord } from "@/lib/memory-records";
 import { cardStagger, pageTransition, transitions } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { useOnboarding } from "./hooks/useOnboarding";
+import { supabase } from "@/lib/supabase";
 
 const EMOTION_CHIP: Record<
   AnimalId,
@@ -32,8 +33,6 @@ const EMOTION_CHIP: Record<
 };
 
 type Memory = SampleMemory;
-
-const recentMemories: Memory[] = SAMPLE_MEMORIES;
 
 function formatToday() {
   const d = new Date();
@@ -112,21 +111,50 @@ function FeaturedStory({ memory, tags }: { memory: Memory; tags: string[] }) {
 export default function Home() {
   const { isChecking } = useOnboarding();
   const reduceMotion = useReducedMotion();
+  const [recentMemories, setRecentMemories] = useState<Memory[]>([]);
+  const [isLoadingMemories, setIsLoadingMemories] = useState(true);
+
+  // 「思い出」ページと同じ memories テーブルから、表示順そのまま最新4件を取得
+  useEffect(() => {
+    async function fetchMemories() {
+      try {
+        const { data, error } = await supabase
+          .from("memories")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(4);
+
+        if (!error && data) {
+          setRecentMemories((data as MemoryRecord[]).map(toHomeMemory));
+        }
+      } catch {
+        setRecentMemories([]);
+      } finally {
+        setIsLoadingMemories(false);
+      }
+    }
+    fetchMemories();
+  }, []);
+
   // 主役決定用のメモリーID（既定: 最新 = recentMemories[0]）
-  const [heroMemoryId, setHeroMemoryId] = useState<string | null>(
-    recentMemories[0]?.id ?? null,
-  );
+  const [heroMemoryId, setHeroMemoryId] = useState<string | null>(null);
   // 右図鑑で詳細を見ている動物（中央には影響しない）
-  const [selectedCatalogId, setSelectedCatalogId] = useState<AnimalId>(
-    recentMemories[0]?.animalId ?? DEFAULT_ANIMAL_ID,
-  );
+  const [selectedCatalogId, setSelectedCatalogId] = useState<AnimalId>(DEFAULT_ANIMAL_ID);
   const [actionTick, setActionTick] = useState(0);
   const [tapped, setTapped] = useState(false);
   const [today] = useState(() => formatToday());
 
+  // recentMemories が変わったら heroMemoryId / selectedCatalogId を更新
+  useEffect(() => {
+    if (recentMemories.length > 0) {
+      setHeroMemoryId((prev) => prev ?? recentMemories[0].id);
+      setSelectedCatalogId(recentMemories[0].animalId);
+    }
+  }, [recentMemories]);
+
   const heroMemory = useMemo(
     () => recentMemories.find((m) => m.id === heroMemoryId) ?? null,
-    [heroMemoryId],
+    [heroMemoryId, recentMemories],
   );
   const heroAnimal = useMemo(
     () => getAnimal(heroMemory?.animalId ?? DEFAULT_ANIMAL_ID),
@@ -204,6 +232,7 @@ export default function Home() {
         <section className="order-2 lg:order-1 lg:col-span-4">
           <MemoriesColumn
             memories={recentMemories}
+            isLoading={isLoadingMemories}
             heroMemoryId={heroMemoryId}
             onPick={handlePickMemory}
           />
@@ -409,10 +438,12 @@ function HeroColumn({
  * =======================================================*/
 function MemoriesColumn({
   memories,
+  isLoading,
   heroMemoryId,
   onPick,
 }: {
   memories: Memory[];
+  isLoading: boolean;
   heroMemoryId: string | null;
   onPick: (id: string) => void;
 }) {
@@ -450,7 +481,17 @@ function MemoriesColumn({
         animate="animate"
         variants={cardStagger.container}
       >
-        {memories.map((m, idx) => (
+        {isLoading && (
+          <p className="py-4 text-sm text-muted-foreground">
+            思い出を読み込んでいます...
+          </p>
+        )}
+        {!isLoading && memories.length === 0 && (
+          <p className="py-4 text-sm leading-relaxed text-muted-foreground">
+            まだ思い出が記録されていません。
+          </p>
+        )}
+        {!isLoading && memories.map((m, idx) => (
           <motion.div key={m.id} className="pt-2.5 first:pt-0" variants={cardStagger.item}>
             <MemoryCard
               memory={m}

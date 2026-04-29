@@ -6,10 +6,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AppHeader } from "@/components/app-header"; // Home基準
 import { pageTransition, transitions } from "@/lib/motion"; // Home基準
 import Image from "next/image";
+import { toAlbumMemory, type MemoryAlbumItem, type MemoryAnimalId } from "@/lib/memory-records";
 
 // Memoryページ専用の動物定義
-export type MemoryAnimalId = "lion" | "rabbit" | "cat" | "bear" | "fox";
-
 export interface MemoryAnimal {
   id: MemoryAnimalId;
   label: string;
@@ -29,18 +28,8 @@ export function getMemoryAnimal(id: MemoryAnimalId): MemoryAnimal {
   return MEMORY_ANIMALS.find((a) => a.id === id) ?? MEMORY_ANIMALS[2]; // default to cat
 }
 
-// Homeの型に準拠した内部データ構造
-interface Memory {
-  id: number;
-  imageUrl: string;
-  diaryText: string;
-  emotion: string;
-  animalId: MemoryAnimalId;
-  createdAt: string;
-}
-
 export default function MemoryAlbumPage() {
-  const [memories, setMemories] = useState<Memory[]>([]);
+  const [memories, setMemories] = useState<MemoryAlbumItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -55,16 +44,7 @@ export default function MemoryAlbumPage() {
       if (error) {
         console.error("Failed to fetch memories:", error);
       } else if (data) {
-        // Supabaseのsnake_caseをHome基準のcamelCaseに変換して保持
-        const formatted = data.map((m) => ({
-          id: m.id,
-          imageUrl: m.image_url,
-          diaryText: m.diary_text,
-          emotion: m.emotion,
-          animalId: m.animal_id as MemoryAnimalId,
-          createdAt: m.created_at,
-        }));
-        setMemories(formatted);
+        setMemories(data.map(toAlbumMemory));
       }
       setLoading(false);
     };
