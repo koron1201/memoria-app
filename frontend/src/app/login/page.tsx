@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { transitions } from "@/lib/motion";
@@ -29,25 +30,81 @@ export default function WelcomePage() {
     };
 
     return (
-        <>
-            <motion.div
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={transitions.gentle}
-                className="flex min-h-dvh flex-col items-center justify-center gap-6 px-8"
-            >
-                <div className="text-center">
-                    <h1 className="text-2xl font-bold tracking-tight">はじめましょう</h1>
-                    <p className="mt-2 text-sm text-muted-foreground">
+        <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={transitions.gentle}
+            className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-6 py-8"
+        >
+            <Image
+                src="/login-assets/04_background_blobs.png"
+                alt=""
+                width={400}
+                height={400}
+                priority
+                className="pointer-events-none absolute left-1/2 top-1/2 w-[38rem] max-w-none -translate-x-1/2 -translate-y-1/2 opacity-35 blur-[1px]"
+            />
+            <Image
+                src="/login-assets/05_wave_texture.png"
+                alt=""
+                width={400}
+                height={100}
+                className="pointer-events-none absolute inset-x-0 top-0 h-28 w-full object-cover opacity-45"
+            />
+            <Image
+                src="/login-assets/06_sparkles.png"
+                alt=""
+                width={200}
+                height={200}
+                className="pointer-events-none absolute right-[max(1.5rem,calc(50%-18rem))] top-[12vh] w-28 opacity-65"
+            />
+            <div
+                className="pointer-events-none absolute inset-0 bg-[radial-gradient(72%_52%_at_50%_6%,rgba(255,255,255,0.76),transparent_68%),linear-gradient(180deg,rgba(255,252,247,0.42),rgba(255,255,255,0.16))]"
+                aria-hidden
+            />
+            <div className="relative w-full max-w-sm">
+                <div className="rounded-[1.75rem] border border-white/65 bg-mono-paper/78 px-5 pb-5 pt-6 text-center shadow-elev backdrop-blur-[24px]">
+                    <div className="mx-auto grid size-20 place-content-center rounded-full border border-white/70 bg-white/45 shadow-soft">
+                        <Image
+                            src="/login-assets/01_app_icon.png"
+                            alt=""
+                            width={68}
+                            height={68}
+                            priority
+                            className="rounded-full"
+                        />
+                    </div>
+
+                    <div className="mt-5">
+                        <p className="text-[11px] font-semibold tracking-[0.32em] text-primary/80">
+                            MEMORIA
+                        </p>
+                        <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
+                            はじめましょう
+                        </h1>
+                        <p className="mx-auto mt-2 max-w-[17rem] text-sm leading-relaxed text-muted-foreground">
+                            思い出を物語にして、いつでも見返せる場所へ。
+                        </p>
+                    </div>
+
+                    <div className="relative mx-auto my-5 h-5 w-44">
+                        <Image
+                            src="/login-assets/11_diamond_divider.png"
+                            alt=""
+                            fill
+                            sizes="11rem"
+                            className="object-contain opacity-70"
+                        />
+                    </div>
+
+                    <p className="mb-3 text-xs text-muted-foreground">
                         アカウントを作ると思い出をどこでも見られます
                     </p>
-                </div>
-
-                <div className="flex w-full max-w-xs flex-col gap-3">
+                    <div className="flex w-full flex-col gap-3">
                     <Button
                         onClick={handleGoogleLogin}
                         variant="outline"
-                        className="h-12 w-full gap-2 rounded-2xl text-sm font-medium"
+                        className="h-12 w-full gap-2 rounded-2xl border-white/75 bg-white/82 text-sm font-semibold shadow-ambient hover:bg-white"
                     >
                         <svg width="18" height="18" viewBox="0 0 24 24">
                             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -61,12 +118,17 @@ export default function WelcomePage() {
                     <Button
                         onClick={handleGuest}
                         variant="ghost"
-                        className="h-12 w-full rounded-2xl text-sm text-muted-foreground"
+                        className="h-12 w-full rounded-2xl text-sm font-medium text-muted-foreground hover:bg-white/45 hover:text-foreground"
                     >
                         ゲストとして使う
                     </Button>
+                    </div>
                 </div>
-            </motion.div>
-        </>
+
+                <p className="mt-4 text-center text-[11px] leading-relaxed text-muted-foreground/75">
+                    写真とひとことから、今日の気持ちを静かに残します。
+                </p>
+            </div>
+        </motion.div>
     );
 }

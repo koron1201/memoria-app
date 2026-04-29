@@ -74,15 +74,15 @@ export default function OnboardingPage() {
                 className="flex w-full flex-col items-center gap-6 text-center"
             >
               {"image" in slide ? (
-                <div className="relative aspect-[4/5] w-[min(82vw,22rem)] overflow-hidden rounded-[1.35rem] shadow-elev ring-1 ring-white/55">
+                <div className="relative aspect-[307/204] w-[min(86vw,28rem)] overflow-hidden rounded-[1.35rem] bg-white/55 p-3 shadow-elev ring-1 ring-white/60 backdrop-blur-xl">
                   <Image
                     src={slide.image}
                     alt=""
                     fill
                     priority={current === 0}
                     quality={100}
-                    sizes="(max-width: 640px) 82vw, 22rem"
-                    className="object-cover"
+                    sizes="(max-width: 640px) 86vw, 28rem"
+                    className="object-contain"
                   />
                 </div>
               ) : (

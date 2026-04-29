@@ -55,7 +55,7 @@ function FeaturedStory({ memory, tags }: { memory: Memory; tags: string[] }) {
       href={`/memory/${memory.id}`}
       className="group block rounded-[1.75rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mono-sage/45"
     >
-      <div className="relative min-h-[10.5rem] overflow-hidden rounded-[1.75rem] shadow-elev ring-1 ring-white/45">
+      <div className="relative min-h-[12.25rem] overflow-hidden rounded-[1.75rem] shadow-elev ring-1 ring-white/45 sm:min-h-[11.25rem]">
         <div
           className="absolute inset-0 bg-gradient-to-br from-amber-100/80 via-rose-50/50 to-cyan-100/40 transition-transform duration-[1.1s] ease-out group-hover:scale-[1.015]"
           aria-hidden
@@ -69,14 +69,14 @@ function FeaturedStory({ memory, tags }: { memory: Memory; tags: string[] }) {
           aria-hidden
         />
 
-        <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full border border-white/50 bg-mono-ink/8 px-2.5 py-1 text-[10px] font-medium text-mono-ink/85 shadow-ambient backdrop-blur-md">
+        <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-full border border-white/65 bg-mono-paper/78 px-2.5 py-1 text-[10px] font-semibold text-mono-ink/85 shadow-ambient backdrop-blur-md">
           <span className="text-[12px] leading-none" aria-hidden>
             📷
           </span>
           <span className="tabular-nums tracking-wide">{memory.date}</span>
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 p-3.5 sm:p-4">
+        <div className="absolute bottom-0 left-0 right-0 p-3.5 pt-12 sm:p-4 sm:pt-12">
           <div className="rounded-2xl border border-white/40 bg-white/18 px-3.5 py-3 shadow-soft [box-shadow:inset_0_1px_0_rgba(255,255,255,0.5)] backdrop-blur-[20px]">
             <p className="text-[10px] font-medium tracking-[0.18em] text-mono-ink/65">
               いまの1ページ
@@ -92,9 +92,9 @@ function FeaturedStory({ memory, tags }: { memory: Memory; tags: string[] }) {
               </p>
             </div>
             <div className="mt-2.5 flex flex-wrap gap-1.5">
-              {tags.slice(0, 3).map((t) => (
+              {tags.slice(0, 3).map((t, index) => (
                 <span
-                  key={t}
+                  key={`${t}-${index}`}
                   className="inline-flex items-center rounded-full border border-white/50 bg-white/35 px-2.5 py-0.5 text-[10px] font-medium text-mono-ink/90 backdrop-blur-sm"
                 >
                   {t}
@@ -519,12 +519,7 @@ function MemoryCard({
 }) {
   const animal = getAnimal(memory.animalId);
   return (
-    <button
-      type="button"
-      onClick={() => onPick(memory.id)}
-      aria-pressed={isHero}
-      className="group block w-full text-left"
-    >
+    <div className="group block w-full">
       <div
         className={cn(
           "relative flex gap-3 rounded-xl px-0.5 py-1 transition-all",
@@ -539,55 +534,66 @@ function MemoryCard({
             aria-hidden
           />
         )}
-        <div
-          className={cn(
-            "relative size-[4.5rem] shrink-0 overflow-hidden rounded-xl ring-1 ring-mono-ink/10",
-            isLatest && "ring-2",
-          )}
-          style={isLatest ? { boxShadow: `0 0 0 1px ${animal.accent}55` } : undefined}
+        <button
+          type="button"
+          onClick={() => onPick(memory.id)}
+          aria-pressed={isHero}
+          className="flex min-w-0 flex-1 gap-3 text-left"
         >
-          <Image
-            src={memory.imageUrl}
-            alt=""
-            fill
-            className="object-cover"
-            sizes="72px"
-          />
-        </div>
-        <div className="min-w-0 flex-1 pr-0.5 pt-0.5">
-          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            {isLatest && (
-              <span
-                className="rounded px-1 py-0.5 text-[8px] font-bold tracking-widest text-white"
-                style={{ background: animal.accent }}
-              >
-                NEW
-              </span>
+          <div
+            className={cn(
+              "relative size-[4.5rem] shrink-0 overflow-hidden rounded-xl ring-1 ring-mono-ink/10",
+              isLatest && "ring-2",
             )}
-            <time className="text-[12px] font-medium tabular-nums text-muted-foreground">
-              {memory.date}
-            </time>
-            <span className="min-w-0 text-sm font-semibold leading-snug text-foreground">
-              {memory.listTitle}
-            </span>
+            style={isLatest ? { boxShadow: `0 0 0 1px ${animal.accent}55` } : undefined}
+          >
+            <Image
+              src={memory.imageUrl}
+              alt=""
+              fill
+              className="object-cover"
+              sizes="72px"
+            />
           </div>
-          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-            {memory.meta != null && memory.meta !== "" && (
-              <span className="text-[10px] tabular-nums text-muted-foreground/85">
-                {memory.meta}
+          <div className="min-w-0 flex-1 pr-0.5 pt-0.5">
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              {isLatest && (
+                <span
+                  className="rounded px-1 py-0.5 text-[8px] font-bold tracking-widest text-white"
+                  style={{ background: animal.accent }}
+                >
+                  NEW
+                </span>
+              )}
+              <time className="text-[12px] font-medium tabular-nums text-muted-foreground">
+                {memory.date}
+              </time>
+              <span className="min-w-0 text-sm font-semibold leading-snug text-foreground">
+                {memory.listTitle}
               </span>
-            )}
-            {memory.tags.map((t) => (
-              <span
-                key={t}
-                className="inline-flex rounded-full border border-amber-900/14 bg-mono-cream/55 px-2 py-0.5 text-[10px] font-medium text-[#4a3f34]"
-              >
-                {t}
-              </span>
-            ))}
+            </div>
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+              {memory.meta != null && memory.meta !== "" && (
+                <span className="text-[10px] tabular-nums text-muted-foreground/85">
+                  {memory.meta}
+                </span>
+              )}
+              {memory.tags.map((t, index) => (
+                <span
+                  key={`${t}-${index}`}
+                  className="inline-flex rounded-full border border-amber-900/14 bg-mono-cream/55 px-2 py-0.5 text-[10px] font-medium text-[#4a3f34]"
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
-        <div className="flex shrink-0 items-center self-center text-muted-foreground/50 transition-transform group-hover:translate-x-0.5">
+        </button>
+        <Link
+          href={`/memory/${memory.id}`}
+          className="flex size-8 shrink-0 items-center justify-center self-center rounded-full text-muted-foreground/55 transition-all hover:bg-white/55 hover:text-foreground group-hover:translate-x-0.5"
+          aria-label={`${memory.listTitle}の詳細を見る`}
+        >
           <svg
             width="14"
             height="14"
@@ -599,9 +605,9 @@ function MemoryCard({
           >
             <path d="M9 18l6-6-6-6" />
           </svg>
-        </div>
+        </Link>
       </div>
-    </button>
+    </div>
   );
 }
 

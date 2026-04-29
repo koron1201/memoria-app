@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { DEFAULT_ROADMAP_HREF } from "@/lib/app-paths";
 import { PAST_TANZAKU_ITEMS } from "@/lib/past-tanzaku";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { pageTransition } from "@/lib/motion";
@@ -25,16 +26,69 @@ function formatDateJp(ymd: string) {
 }
 
 export default function TanzakuPage() {
-  const [dream, setDream] = useState(
-    "自分の言葉で誰かの心を動かせる人になりたい",
-  );
+  const router = useRouter();
+  const [dream, setDream] = useState(() => {
+    if (typeof window === "undefined") {
+      return "自分の言葉で誰かの心を動かせる人になりたい";
+    }
+    const params = new URLSearchParams(window.location.search);
+    return params.get("fresh") === "1"
+      ? ""
+      : "自分の言葉で誰かの心を動かせる人になりたい";
+  });
   const [deadline, setDeadline] = useState("2026-12-31");
+  const [isSending, setIsSending] = useState(false);
   const dateInputId = "tanzaku-deadline";
+
+  const sendTanzaku = () => {
+    if (!dream.trim() || isSending) return;
+    setIsSending(true);
+    window.setTimeout(() => {
+      router.push(DEFAULT_ROADMAP_HREF);
+    }, 1300);
+  };
 
   return (
     <>
       <RouteAtmosphere variant="wishes" />
       <motion.div {...pageTransition}>
+        <AnimatePresence>
+          {isSending && (
+            <motion.div
+              className="fixed inset-0 z-[70] flex items-center justify-center bg-mono-ink/12 backdrop-blur-[3px]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div
+                className="relative h-56 w-24 rounded-2xl border border-amber-900/8 bg-gradient-to-b from-[#fffcf4] to-[#f0e4d2] shadow-elev"
+                initial={{ y: 80, rotate: -4, opacity: 0 }}
+                animate={{
+                  y: [-10, -80, -240],
+                  x: [0, 18, -10],
+                  rotate: [-4, 6, -2],
+                  opacity: [1, 1, 0],
+                  scale: [1, 0.96, 0.7],
+                }}
+                transition={{ duration: 1.25, ease: [0.25, 0.1, 0.25, 1] }}
+              >
+                <p
+                  className="absolute inset-4 flex items-center justify-center text-lg font-semibold leading-[2] text-[#3d3730]"
+                  style={{ writingMode: "vertical-rl" }}
+                >
+                  {dream}
+                </p>
+              </motion.div>
+              <motion.p
+                className="absolute bottom-[22vh] text-sm font-medium text-mono-ink/70"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                願いを空へ送っています
+              </motion.p>
+            </motion.div>
+          )}
+        </AnimatePresence>
         <PageHeader
           title="夢を短冊に書いてみよう"
           subline="あなたの願いが、未来の一歩になります。"
@@ -134,6 +188,7 @@ export default function TanzakuPage() {
               className="h-12 w-full text-base font-medium"
               size="lg"
               disabled={!dream.trim()}
+              onClick={sendTanzaku}
             >
               短冊を送る
             </Button>
