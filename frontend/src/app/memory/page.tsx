@@ -9,6 +9,8 @@ import Image from "next/image";
 import { toAlbumMemory, type MemoryAlbumItem, type MemoryAnimalId } from "@/lib/memory-records";
 
 // Memoryページ専用の動物定義
+export type MemoryAnimalId = "cat" | "bear" | "fox" | "mouse" | "dog" | "penguin";
+
 export interface MemoryAnimal {
   id: MemoryAnimalId;
   label: string;
@@ -17,11 +19,12 @@ export interface MemoryAnimal {
 }
 
 const MEMORY_ANIMALS: MemoryAnimal[] = [
-  { id: "lion", label: "情熱的なライオン", emoji: "🦁", accent: "#D4847A" },
-  { id: "rabbit", label: "思慮深いウサギ", emoji: "🐰", accent: "#C9A87C" },
-  { id: "cat", label: "自由なネコ", emoji: "🐱", accent: "#9BB5A5" },
-  { id: "bear", label: "穏やかなクマ", emoji: "🐻", accent: "#6B8F7A" },
-  { id: "fox", label: "好奇心旺盛なキツネ", emoji: "🦊", accent: "#C4B59A" },
+  { id: "cat", label: "気まぐれネコ", emoji: "🐱", accent: "#81ecec" },
+  { id: "bear", label: "穏やかなクマ", emoji: "🐻", accent: "#a29bfe" },
+  { id: "fox", label: "好奇心旺盛なキツネ", emoji: "🦊", accent: "#ffeaa7" },
+  { id: "mouse", label: "繊細なネズミ", emoji: "🐭", accent: "#fab1a0" }, 
+  { id: "dog", label: "親しみ深いイヌ", emoji: "🐶", accent: "#fdcb6e" },
+  { id: "penguin", label: "愛らしいペンギン", emoji: "🐧", accent: "#00a8ff" },
 ];
 
 export function getMemoryAnimal(id: MemoryAnimalId): MemoryAnimal {

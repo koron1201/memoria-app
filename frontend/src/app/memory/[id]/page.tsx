@@ -9,7 +9,7 @@ import { AppHeader } from "@/components/app-header";
 import { GlassCard } from "@/components/glass-card";
 import { pageTransition } from "@/lib/motion";
 
-export type MemoryAnimalId = "lion" | "rabbit" | "cat" | "bear" | "fox";
+export type MemoryAnimalId = "cat" | "bear" | "fox" | "mouse" | "dog" | "penguin";
 
 // 表示用の型定義
 interface Memory {
