@@ -8,9 +8,6 @@ import { pageTransition, transitions } from "@/lib/motion"; // Home基準
 import Image from "next/image";
 import { toAlbumMemory, type MemoryAlbumItem, type MemoryAnimalId } from "@/lib/memory-records";
 
-// Memoryページ専用の動物定義
-export type MemoryAnimalId = "cat" | "bear" | "fox" | "mouse" | "dog" | "penguin";
-
 export interface MemoryAnimal {
   id: MemoryAnimalId;
   label: string;
