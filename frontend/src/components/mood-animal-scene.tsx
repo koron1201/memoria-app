@@ -71,21 +71,43 @@ function AnimalModel({ src, actionTick }: AnimalModelProps) {
   }, [clonedScene, getThree]);
 
   useEffect(() => {
-    if (actionTick === 0) return;
-
     if (names.length > 0) {
-      const preferred = names.find((n) =>
-        /wave|hello|hi|action|dance|jump|greet/i.test(n),
-      );
       const idleName =
         names.find((n) =>
           /idle|stand|breathing|default|rest|loop|walk|run/i.test(n),
         ) ?? names[0];
+      const idle = actions[idleName];
+      if (!idle) return;
+
+      idle
+        .reset()
+        .setLoop(THREE.LoopRepeat, Infinity)
+        .setEffectiveWeight(0.85)
+        .fadeIn(0.35)
+        .play();
+
+      return () => {
+        idle.fadeOut(0.2);
+      };
+    }
+  }, [actions, names]);
+
+  useEffect(() => {
+    if (actionTick === 0) return;
+
+    if (names.length > 0) {
+      const idleName =
+        names.find((n) =>
+          /idle|stand|breathing|default|rest|loop|walk|run/i.test(n),
+        ) ?? names[0];
+      const preferred = names.find((n) =>
+        /wave|hello|hi|action|dance|jump|greet/i.test(n),
+      );
       const name =
         preferred && preferred !== idleName
           ? preferred
-          : names.find((n) => n !== idleName) ?? names[0];
-      const act = actions[name];
+          : names.find((n) => n !== idleName);
+      const act = name ? actions[name] : undefined;
       if (act) {
         act
           .reset()
@@ -132,9 +154,10 @@ function AnimalModel({ src, actionTick }: AnimalModelProps) {
       return;
     }
 
-    // 待機時の呼吸：Y に 1.5% ぶん、ゆったり左右に揺らぎ
-    const breathY = Math.sin(t * 1.1) * r * 0.015;
-    const swayY = Math.sin(t * 0.35) * 0.035;
+    // 待機時の呼吸。小さい表示枠でも見えるよう、モデル全体をゆっくり動かす。
+    const breathY = Math.sin(t * 1.25) * r * 0.045;
+    const swayY = Math.sin(t * 0.55) * 0.14;
+    const tiltZ = Math.sin(t * 0.8) * 0.04;
     group.current.position.y = THREE.MathUtils.lerp(
       group.current.position.y,
       breathY,
@@ -147,8 +170,8 @@ function AnimalModel({ src, actionTick }: AnimalModelProps) {
     );
     group.current.rotation.z = THREE.MathUtils.lerp(
       group.current.rotation.z,
-      0,
-      0.1,
+      tiltZ,
+      0.08,
     );
   });
 
