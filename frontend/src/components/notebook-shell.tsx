@@ -168,11 +168,11 @@ export function NotebookSideTabs({ active }: { active: keyof typeof notebookTabs
   return (
     <nav
       aria-label="ノートインデックス"
-      className="group absolute right-0 top-0 z-20 hidden w-5 overflow-hidden rounded-[0.75rem] border border-mono-linen/40 bg-mono-cream/80 shadow-soft ring-1 ring-white/50 transition-[width] duration-200 ease-out hover:w-20 focus-within:w-20 min-[760px]:block"
+      className="group absolute right-0 top-0 z-20 hidden h-12 w-5 overflow-hidden rounded-bl-[0.75rem] rounded-tl-[0.75rem] border border-r-0 border-mono-linen/40 bg-mono-cream/80 shadow-soft ring-1 ring-white/50 transition-[height,width] duration-200 ease-out hover:h-[18.6rem] hover:w-20 focus-within:h-[18.6rem] focus-within:w-20 min-[760px]:block"
     >
       <span
         aria-hidden
-        className="pointer-events-none absolute inset-y-0 left-0 w-5 bg-primary/88 transition-opacity duration-150 group-hover:opacity-0 group-focus-within:opacity-0"
+        className="pointer-events-none absolute inset-0 bg-primary/88 transition-opacity duration-150 group-hover:opacity-0 group-focus-within:opacity-0"
       />
       {tabs.map(({ href, label, icon: Icon, active: isActive }) => (
         <Link

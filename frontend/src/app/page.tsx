@@ -163,7 +163,7 @@ export default function Home() {
               <DreamRoadmapCard />
             </div>
 
-            <div className="grid gap-6">
+            <div className="grid gap-6 xl:translate-x-3">
               <section>
                 <NotebookSectionTitle number="02" label="CATALOG" title="動物図鑑" icon={Grid2X2} />
                 <div className="grid grid-cols-3 gap-3">
@@ -371,7 +371,7 @@ function PartnerCard({ animal }: { animal: ReturnType<typeof getAnimal> }) {
   return (
     <section className="rounded-[1rem] border border-mono-linen/30 bg-white/55 p-5 shadow-soft ring-1 ring-white/45">
       <NotebookSectionTitle title="今日の相棒" icon={Sparkles} className="mb-1" />
-      <div className="grid gap-4 sm:grid-cols-[1fr_9rem] sm:items-center lg:grid-cols-[1fr_8.5rem]">
+      <div className="grid gap-4 sm:grid-cols-[1fr_9.75rem] sm:items-center lg:grid-cols-[1fr_9.5rem]">
         <div>
           <h3 className="font-serif text-2xl font-semibold text-mono-ink">
             {animal.label}
@@ -387,7 +387,7 @@ function PartnerCard({ animal }: { animal: ReturnType<typeof getAnimal> }) {
             <ChevronRight className="size-4" aria-hidden />
           </Link>
         </div>
-        <div className="relative h-36">
+        <div className="relative h-36 w-36 justify-self-center sm:translate-x-2 sm:justify-self-end lg:translate-x-3">
           <MoodAnimal
             src={animal.glb}
             accent={animal.accent}
