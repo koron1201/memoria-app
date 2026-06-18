@@ -62,6 +62,28 @@ function formatShortDate(createdAt: string) {
   return `${d.getMonth() + 1}/${d.getDate()}(${week})`;
 }
 
+function getPolaroidMotto(memory: MemoryAlbumItem) {
+  const text = `${memory.diaryText} ${memory.emotion}`;
+
+  if (/(カフェ|読書|本|静寂|安らぎ|穏やか|光)/.test(text)) {
+    return "静かなひとときは、心の宝物。";
+  }
+  if (/(友|家族|会話|笑|一緒|再会|つなが)/.test(text)) {
+    return "笑い合う時間が、いちばんの贈りもの。";
+  }
+  if (/(海|空|山|森|花|自然|風|景色|散歩)/.test(text)) {
+    return "風にふれた心は、少し軽くなる。";
+  }
+  if (/(挑戦|頑張|できた|達成|勇気|成長)/.test(text)) {
+    return "小さな一歩も、未来を照らす。";
+  }
+  if (/(寂|涙|不安|迷|疲|悲)/.test(text)) {
+    return "弱い日も、やさしく抱きしめていい。";
+  }
+
+  return "小さな今日が、明日の宝物。";
+}
+
 export default function MemoryAlbumPage() {
   const [memories, setMemories] = useState<MemoryAlbumItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -243,11 +265,24 @@ function OpenBook({
 }) {
   return (
     <div className="relative">
-      <div className="relative mx-auto aspect-[1.58/1] min-h-[24rem] w-full overflow-hidden rounded-[0.55rem] border-[8px] border-[#d5c9b7]/80 bg-[#f9f5eb] shadow-elev ring-1 ring-mono-ink/8 max-lg:aspect-auto max-lg:min-h-0">
-        <div
-          className="pointer-events-none absolute inset-y-4 left-1/2 z-20 w-[2px] -translate-x-1/2 bg-gradient-to-b from-transparent via-mono-ink/12 to-transparent"
-          aria-hidden
-        />
+      <div className="pointer-events-none absolute inset-x-6 bottom-[-18px] h-14 rounded-[50%] bg-mono-ink/16 blur-2xl" aria-hidden />
+      <div className="relative mx-auto w-full overflow-hidden rounded-[0.45rem] border border-[#d8cab7] bg-[#ded2bf] p-1 shadow-[0_28px_70px_rgba(58,49,38,0.18),0_8px_24px_rgba(58,49,38,0.10)] ring-1 ring-white/55">
+        <div className="pointer-events-none absolute inset-x-2 top-1 h-3 rounded-t-[0.35rem] bg-white/35" aria-hidden />
+        <div className="pointer-events-none absolute inset-x-3 bottom-1 h-2 rounded-b-[0.35rem] bg-mono-ink/8" aria-hidden />
+        <div className="relative overflow-hidden rounded-[0.32rem] bg-[#f8f1e4] shadow-[inset_0_1px_0_rgba(255,255,255,0.85),inset_0_-10px_24px_rgba(91,75,52,0.08)]">
+          <span className="noise-layer pointer-events-none absolute inset-0 z-10" aria-hidden />
+          <span
+            className="pointer-events-none absolute inset-y-0 left-1/2 z-20 hidden w-16 -translate-x-1/2 lg:block"
+            style={{
+              background:
+                "linear-gradient(90deg, transparent 0%, rgba(86,70,48,0.08) 28%, rgba(255,255,255,0.34) 48%, rgba(65,50,36,0.16) 52%, rgba(86,70,48,0.08) 72%, transparent 100%)",
+            }}
+            aria-hidden
+          />
+          <span
+            className="pointer-events-none absolute inset-y-6 left-1/2 z-30 hidden w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-mono-ink/20 to-transparent lg:block"
+            aria-hidden
+          />
         <AnimatePresence initial={false} custom={direction} mode="wait">
           <motion.div
             key={current.id}
@@ -261,22 +296,42 @@ function OpenBook({
             animate="center"
             exit="exit"
             transition={transitions.gentle}
-            className="grid h-full grid-cols-1 lg:grid-cols-2"
+            className="grid min-h-[38rem] grid-cols-1 lg:grid-cols-2"
           >
-            <div className="relative flex min-h-[22rem] items-center justify-center border-mono-linen/50 bg-[#fbf8f0] p-6 shadow-[inset_-12px_0_18px_-18px_rgba(58,56,52,0.55)] lg:border-r lg:p-10">
+            <div
+              className="relative flex min-h-[25rem] items-center justify-center overflow-hidden border-b border-[#d9cbb7]/70 bg-[#fbf5e9] px-6 py-9 shadow-[inset_-28px_0_34px_-34px_rgba(58,49,38,0.72)] sm:px-9 lg:min-h-[38rem] lg:border-b-0 lg:border-r lg:px-12"
+              style={{
+                backgroundImage:
+                  "radial-gradient(rgba(74,60,42,0.035) 0.7px, transparent 0.7px), linear-gradient(90deg, rgba(255,255,255,0.5), transparent 28%, rgba(99,78,52,0.035) 100%)",
+                backgroundSize: "15px 15px, 100% 100%",
+              }}
+            >
               <Polaroid current={current} />
             </div>
 
-            <article className="flex min-h-[22rem] flex-col justify-center bg-[#fbf8f0] px-7 py-8 font-serif text-mono-ink sm:px-10 lg:px-14">
-              <time className="border-b border-mono-linen/60 pb-2 text-[11px] tracking-[0.14em] text-muted-foreground">
+            <article
+              className="relative flex min-h-[25rem] flex-col bg-[#fbf5e9] px-8 py-10 font-serif text-mono-ink shadow-[inset_28px_0_34px_-34px_rgba(58,49,38,0.72)] sm:px-12 lg:min-h-[38rem] lg:px-16 lg:py-16"
+              style={{
+                backgroundImage:
+                  "radial-gradient(rgba(74,60,42,0.03) 0.7px, transparent 0.7px)",
+                backgroundSize: "15px 15px",
+              }}
+            >
+              <time className="w-full border-b border-[#d8c9b2]/70 pb-3 text-[10px] tracking-[0.12em] text-muted-foreground">
                 {formatMemoryDate(current.createdAt)}
               </time>
-              <p className="mt-5 whitespace-pre-line text-sm leading-[2.1] text-mono-ink/88">
+              <p
+                className="mt-7 max-w-[31rem] whitespace-pre-line pb-px text-[13px] leading-[2.15rem] text-mono-ink/84"
+                style={{
+                  backgroundImage:
+                    "repeating-linear-gradient(to bottom, transparent 0 calc(2.15rem - 1px), rgba(146,120,84,0.18) calc(2.15rem - 1px) 2.15rem)",
+                }}
+              >
                 {current.diaryText}
               </p>
-              <div className="mt-8 flex flex-wrap gap-2">
+              <div className="mt-auto flex flex-wrap gap-2 pt-10">
                 <span
-                  className="rounded-full border px-3 py-1 text-[11px] font-semibold"
+                  className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[10px] font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]"
                   style={{
                     backgroundColor: `${animal.accent}16`,
                     borderColor: `${animal.accent}34`,
@@ -285,20 +340,21 @@ function OpenBook({
                 >
                   {animal.emoji} {animal.label}
                 </span>
-                <span className="rounded-full bg-white/65 px-3 py-1 text-[11px] text-mono-ink/70 ring-1 ring-mono-ink/6">
+                <span className="rounded-full bg-white/58 px-3 py-1 text-[10px] text-mono-ink/68 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] ring-1 ring-mono-ink/5">
                   # {current.emotion}
                 </span>
               </div>
             </article>
           </motion.div>
         </AnimatePresence>
+        </div>
       </div>
 
       <button
         type="button"
         onClick={onPrev}
         disabled={currentIndex === 0}
-        className="absolute left-3 top-1/2 z-30 grid size-10 -translate-y-1/2 place-items-center rounded-full bg-white/78 text-mono-ink shadow-soft ring-1 ring-mono-ink/8 backdrop-blur disabled:opacity-0"
+        className="absolute left-3 top-1/2 z-30 grid size-10 -translate-y-1/2 place-items-center rounded-full bg-white/82 text-mono-ink shadow-soft ring-1 ring-mono-ink/8 backdrop-blur disabled:opacity-0"
         aria-label="前の思い出"
       >
         <ChevronLeft className="size-4" aria-hidden />
@@ -307,14 +363,14 @@ function OpenBook({
         type="button"
         onClick={onNext}
         disabled={currentIndex === total - 1}
-        className="absolute right-3 top-1/2 z-30 grid size-10 -translate-y-1/2 place-items-center rounded-full bg-white/78 text-mono-ink shadow-soft ring-1 ring-mono-ink/8 backdrop-blur disabled:opacity-0"
+        className="absolute right-3 top-1/2 z-30 grid size-10 -translate-y-1/2 place-items-center rounded-full bg-white/82 text-mono-ink shadow-soft ring-1 ring-mono-ink/8 backdrop-blur disabled:opacity-0"
         aria-label="次の思い出"
       >
         <ChevronRight className="size-4" aria-hidden />
       </button>
       <Link
         href={`/memory/${current.id}`}
-        className="absolute right-2 top-[57%] z-30 grid size-11 place-items-center rounded-full bg-white/86 text-mono-ink shadow-soft ring-1 ring-mono-ink/8 backdrop-blur"
+        className="absolute right-[-0.45rem] top-[57%] z-30 grid size-11 place-items-center rounded-full bg-white/90 text-mono-ink shadow-soft ring-1 ring-mono-ink/8 backdrop-blur"
         aria-label="思い出を編集する"
       >
         <Pencil className="size-4" aria-hidden />
@@ -324,18 +380,33 @@ function OpenBook({
 }
 
 function Polaroid({ current }: { current: MemoryAlbumItem }) {
+  const motto = getPolaroidMotto(current);
+
   return (
-    <div className="relative w-full max-w-[21rem] rotate-[-1.5deg] bg-white p-3 pb-14 shadow-elev ring-1 ring-mono-ink/8">
-      <WashiTape className="-top-4 left-16" />
-      <div className="relative aspect-[1.08/1] overflow-hidden bg-mono-cream">
+    <div className="relative w-full max-w-[22rem] rotate-[-1.4deg] bg-[#fffdf8] p-3 pb-16 shadow-[0_18px_32px_rgba(58,49,38,0.14),0_3px_8px_rgba(58,49,38,0.08)] ring-1 ring-mono-ink/8">
+      <WashiTape className="-top-4 left-14 h-7 w-20 opacity-80" />
+      <span className="noise-layer pointer-events-none absolute inset-0" aria-hidden />
+      <div className="relative aspect-[1.06/1] overflow-hidden bg-mono-cream shadow-[inset_0_0_0_1px_rgba(58,49,38,0.05)]">
         <Image src={current.imageUrl} alt="" fill className="object-cover" sizes="360px" unoptimized />
       </div>
-      <p className="mt-5 px-3 font-serif text-lg leading-relaxed text-mono-ink">
-        {current.diaryText.slice(0, 28)}
-        {current.diaryText.length > 28 ? "..." : ""}
+      <p className="mx-auto mt-5 max-w-[17.5rem] text-center font-serif text-[1.02rem] font-semibold leading-relaxed text-mono-ink/86">
+        <span className="mb-1 block text-[10px] font-sans font-bold tracking-[0.18em] text-[#d998a8]">
+          MEMORY WORDS
+        </span>
+        <span className="relative inline-block px-2">
+          <span className="absolute -left-1 top-0 text-[#e9b7a2]" aria-hidden>
+            “
+          </span>
+          {motto}
+          <span className="absolute -right-1 bottom-0 text-[#e9b7a2]" aria-hidden>
+            ”
+          </span>
+        </span>
       </p>
-      <div className="absolute bottom-4 right-6 text-3xl text-[#edb7a2]" aria-hidden>
-        ❀
+      <div className="absolute bottom-4 right-6 flex items-end gap-1.5 text-[#e5a695]" aria-hidden>
+        <span className="text-2xl leading-none">❀</span>
+        <span className="text-lg leading-none opacity-80">✿</span>
+        <span className="text-xl leading-none text-[#d9c76f]">✤</span>
       </div>
     </div>
   );
