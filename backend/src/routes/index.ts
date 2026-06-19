@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { healthRoute } from "./health-route";
 import analyzeRouter from './analyze';
+import authRouter from './auth'; // 1. authRouter をインポート
 
 export function createApp(): Hono {
   const app = new Hono();
@@ -12,6 +13,9 @@ export function createApp(): Hono {
   app.route("/health", healthRoute);
 
   app.route('/api/analyze', analyzeRouter);
+  
+  // 2. /api/auth というパスで authRouter を登録
+  app.route('/api/auth', authRouter); 
 
   return app;
 }

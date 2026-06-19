@@ -11,6 +11,7 @@ import { pageTransition, transitions } from "@/lib/motion";
 import { RouteAtmosphere } from "@/components/route-atmosphere";
 import { APP_LS } from "@/lib/app-local-storage";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 
 const ANALYSIS_STEPS = ["写真解析", "感情分析", "文章理解", "動物選定"] as const;
 
@@ -93,13 +94,26 @@ export default function UploadPage() {
     formData.append("text", text);
 
     try {
-      const res = await fetch("http://localhost:3001/api/analyze", {
+      // ★ JWTトークンを取得
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (!session) {
+        alert("ログインが必要です");
+        router.push("/onboarding");
+        return;
+      }
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/analyze`, { // ★ 環境変数を使用
         method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`, // ★ JWTを付与
+        },
         body: formData,
       });
 
       if (!res.ok) throw new Error("解析に失敗しました");
 
+      // 以下は変更なし
       const result = await res.json();
       setProgressPct(100);
       setStepIndex(ANALYSIS_STEPS.length - 1);
@@ -108,9 +122,8 @@ export default function UploadPage() {
       localStorage.setItem(APP_LS.lastAnalysis, JSON.stringify(result));
       if (previewUrl) localStorage.setItem(APP_LS.lastImage, previewUrl);
 
-      // バックエンドから返ってきたIDがあればそれを使う。なければ一覧へ。
       if (result.id) {
-        router.push(`/memory/${result.id}`); 
+        router.push(`/memory/${result.id}`);
       } else {
         router.push("/memory");
       }

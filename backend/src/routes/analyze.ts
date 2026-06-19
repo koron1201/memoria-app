@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { analyzeMemory } from '../services/gemini';
-import { supabase } from '../lib/supabase'; // 先ほど作ったsupabaseクライアントをimport
+// 【修正】エクスポート名に合わせて、supabaseAdmin と getAuthUser をインポート
+import { supabaseAdmin, getAuthUser } from '../lib/supabase'; 
 
 const router = new Hono();
 
@@ -20,16 +21,22 @@ function toSafeStorageName(name: string) {
 
 /**
  * POST /api/analyze
- * 画像とテキストを解析する
+ * 画像とテキストを解析し、ログイン中のユーザーの思い出として保存する
  */
 router.post('/', async (c) => {
   try {
+    // 【★認証の追加】ヘッダーからトークンを検証し、Googleログイン中のユーザーを特定
+    const authHeader = c.req.header('Authorization') || null;
+    console.log('AuthHeader:', authHeader) // ← 追加
+    const user = await getAuthUser(authHeader);
+    console.log('User ID:', user.id) // ← 追加
+
     // フォームデータを受け取る
     const body = await c.req.parseBody();
     const imageFile = body['image'];
     const userText = (body['text'] as string) || "";
 
-    // 画像が File オブジェクトかチェック（instanceof File で型を絞り込む）
+    // 画像が File オブジェクトかチェック
     if (!imageFile || !(imageFile instanceof File)) {
       return c.json({ error: "画像を選択してください" }, 400);
     }
@@ -42,14 +49,15 @@ router.post('/', async (c) => {
     const result = await analyzeMemory(
       buffer,
       userText,
-      imageFile.type // "image/jpeg" など
+      imageFile.type
     );
-    //Supabase Storage に画像をアップロード
+
+    // Supabase Storage に画像をアップロード
     const fileName = `${Date.now()}_${toSafeStorageName(imageFile.name)}`;
     const filePath = `uploads/${fileName}`;
 
-    // data: storageData を削除し、error だけを取得するようにします
-    const { error: storageError } = await supabase.storage
+    // 【修正】supabase -> supabaseAdmin に変更
+    const { error: storageError } = await supabaseAdmin.storage
       .from('memories')
       .upload(filePath, buffer, {
         contentType: imageFile.type,
@@ -60,19 +68,22 @@ router.post('/', async (c) => {
         throw new Error("画像のアップロードに失敗しました");
     }
 
-    // 公開URLを取得 (ここで publicUrl を定義します)
-    const { data: { publicUrl } } = supabase.storage
+    // 公開URLを取得
+    // 【修正】supabase -> supabaseAdmin に変更
+    const { data: { publicUrl } } = supabaseAdmin.storage
       .from('memories')
       .getPublicUrl(filePath);
 
     // Database (memoriesテーブル) に保存
-    const { data: dbData, error: dbError } = await supabase
+    // 【修正】supabase -> supabaseAdmin に変更
+    const { data: dbData, error: dbError } = await supabaseAdmin
       .from('memories')
       .insert({
+        user_id: user.id,            // ★ここで特定したGoogleユーザーのUUIDを紐付け！
         image_url: publicUrl,
-        diary_text: result.diaryText, // Geminiが生成したエモい日記テキスト
-        emotion: result.emotion, // Geminiが判定した感情
-        animal_id: result.animalId, // Geminiが判定した動物ID
+        diary_text: result.diaryText,
+        emotion: result.emotion,
+        animal_id: result.animalId,
       })
       .select()
       .single();
@@ -82,16 +93,21 @@ router.post('/', async (c) => {
       throw new Error("データの保存に失敗しました");
     }
 
-    //保存されたレコードのIDと解析結果をフロントに返す
+    // 保存されたレコードのIDと解析結果をフロントに返す
     return c.json({
       id: dbData.id,
       ...result,
       imageUrl: publicUrl
     });
     
-  } catch (error) {
-    // 【修正】 error: any をやめて、安全なログ出力にする
+  } catch (error: any) {
     console.error("Analysis Route Error:", error);
+    
+    // 認証エラーの場合は401を返すように少し親切に分岐
+    if (error.message && error.message.includes('Unauthorized')) {
+      return c.json({ error: error.message }, 401);
+    }
+    
     return c.json({ error: "AI解析中にエラーが発生しました" }, 500);
   }
 });
