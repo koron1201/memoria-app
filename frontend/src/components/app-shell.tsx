@@ -8,7 +8,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isAuthRoute =
     pathname === "/login" || pathname?.startsWith("/onboarding");
   const isMemoryRoute = pathname === "/memory" || pathname?.startsWith("/memory/");
-  const hideBottomNav = isAuthRoute || isMemoryRoute || pathname === "/";
+  const isTanzakuRoute = pathname === "/tanzaku" || pathname?.startsWith("/tanzaku/");
+  const hideBottomNav = isAuthRoute || isMemoryRoute || isTanzakuRoute || pathname === "/";
 
   return (
     <>

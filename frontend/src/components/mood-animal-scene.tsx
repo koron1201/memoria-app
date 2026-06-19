@@ -9,7 +9,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type ErrorInfo,
   type ReactNode,
 } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
@@ -209,7 +208,7 @@ class ModelErrorBoundary extends Component<
     return { hasError: true };
   }
 
-  componentDidCatch(_: Error, __: ErrorInfo) {
+  componentDidCatch() {
     this.props.onError();
   }
 
@@ -259,14 +258,11 @@ export function MoodAnimalScene({
   actionTick,
   onInteract,
 }: MoodAnimalSceneProps) {
-  const [modelReady, setModelReady] = useState(false);
+  const [readySrc, setReadySrc] = useState<string | null>(null);
+  const modelReady = readySrc === src;
   const trigger = () => onInteract?.();
   const handleModelReady = useCallback(() => {
-    setModelReady(true);
-  }, []);
-
-  useEffect(() => {
-    setModelReady(false);
+    setReadySrc(src);
   }, [src]);
 
   return (
@@ -322,7 +318,7 @@ export function MoodAnimalScene({
           color={accent}
         />
         <directionalLight position={[0, -1.5, 2]} intensity={0.18} />
-        <ModelErrorBoundary onError={() => setModelReady(false)} resetKey={src}>
+        <ModelErrorBoundary onError={() => setReadySrc(null)} resetKey={src}>
           <Suspense fallback={null}>
             <AnimalModel
               src={src}
