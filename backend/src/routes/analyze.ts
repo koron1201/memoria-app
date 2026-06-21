@@ -110,12 +110,15 @@ router.post('/', async (c) => {
       imageUrl: publicUrl
     });
     
-  } catch (error: any) {
+  } catch (error) { // ← ": any" を削除
     console.error("Analysis Route Error:", error);
     
+    // error がオブジェクトであり、message プロパティを持っているかチェック（型安全なガード）
+    const errorMessage = error instanceof Error ? error.message : "";
+    
     // 認証エラーの場合は401を返すように少し親切に分岐
-    if (error.message && error.message.includes('Unauthorized')) {
-      return c.json({ error: error.message }, 401);
+    if (errorMessage.includes('Unauthorized')) {
+      return c.json({ error: errorMessage }, 401);
     }
     
     return c.json({ error: "AI解析中にエラーが発生しました" }, 500);

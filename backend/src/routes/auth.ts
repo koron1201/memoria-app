@@ -28,9 +28,12 @@ router.post('/session', async (c) => {
     // Honoのレスポンス返却スタイル
     return c.json({ success: true, profile: data }, 200)
     
-  } catch (error: any) {
+  } catch (error) { // ← ": any" を削除
     console.error("Auth Session Error:", error)
-    return c.json({ success: false, message: error.message }, 401)
+    
+    // error が Error オブジェクトならそのメッセージを、そうでなければ一般的な文言を返す
+    const errorMessage = error instanceof Error ? error.message : "認証エラーが発生しました"
+    return c.json({ success: false, message: errorMessage }, 401)
   }
 })
 
