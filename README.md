@@ -122,9 +122,9 @@ memoria-app/
 │   ├── 04_implementation-timeline.md
 │   └── 05_design-direction.md
 │
-│── docker-compose.yml
+├── docker-compose.yml
 │
-│── Dockerfile.dev
+├── Dockerfile.dev
 │
 ├── .env.example               # 環境変数キー一覧（ルート参照用）
 ├── .github/workflows/ci.yml   # CI（lint / build）

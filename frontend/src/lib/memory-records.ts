@@ -64,9 +64,12 @@ export function toHomeMemory(row: MemoryRecord): SampleMemory {
 }
 
 export function toAlbumMemory(row: MemoryRecord): MemoryAlbumItem {
-  const animalId = ["lion", "rabbit", "cat", "bear", "fox"].includes(row.animal_id)
+  // 💡 定義されているすべてのMemoryAnimalIdを含めるように修正
+  const validAnimals: string[] = ["cat", "bear", "fox", "mouse", "dog", "penguin"];
+
+  const animalId = validAnimals.includes(row.animal_id)
     ? (row.animal_id as MemoryAnimalId)
-    : "cat";
+    : "cat"; // 万が一不正な値が来たらcatにする防衛ライン
 
   return {
     id: row.id,

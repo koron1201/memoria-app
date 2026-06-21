@@ -2,11 +2,12 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { serve } from '@hono/node-server'//Node.js用
 import analyzeRouter from './routes/analyze';
+import tanzakuRouter from './routes/tanzaku';
 
 const app = new Hono()
 
 app.use('/*', cors({
-  origin: 'http://localhost:3000',
+  origin: process.env.CORS_ORIGIN ?? 'http://localhost:3000',
 }))
 
 app.get('/health', (c) => c.json({ status: 'ok' }))
@@ -16,6 +17,7 @@ app.use('*', async (c, next) => {
 });
 
 app.route('/api/analyze', analyzeRouter);
+app.route('/api/tanzaku', tanzakuRouter);
 
 export default {
   port: 3001,

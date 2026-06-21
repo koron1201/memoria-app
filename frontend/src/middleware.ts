@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextRequest, NextResponse } from 'next/server'
 
 // 未ログインでもアクセスできるパス
-const PUBLIC_PATHS = ['/onboarding', '/auth']
+const PUBLIC_PATHS = ['/onboarding', '/auth/callback', '/auth', '/login']
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next()

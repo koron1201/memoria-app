@@ -31,6 +31,16 @@ router.post('/', async (c) => {
     const user = await getAuthUser(authHeader);
     console.log('User ID:', user.id) // ← 追加
 
+    // ★ profilesテーブルにユーザーを自動登録
+    await supabaseAdmin
+      .from('profiles')
+      .upsert({
+        id: user.id,
+        email: user.email!,
+        display_name: user.user_metadata?.full_name || 'ゲストユーザー',
+        avatar_url: user.user_metadata?.avatar_url || '',
+      }, { onConflict: 'id' })
+
     // フォームデータを受け取る
     const body = await c.req.parseBody();
     const imageFile = body['image'];

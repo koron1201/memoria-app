@@ -96,6 +96,8 @@ export default function UploadPage() {
     try {
       // ★ JWTトークンを取得
       const { data: { session } } = await supabase.auth.getSession()
+      console.log('session:', session)        // ← 追加
+      console.log('token:', session?.access_token) // ← 追加
 
       if (!session) {
         alert("ログインが必要です");

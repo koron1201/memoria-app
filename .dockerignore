@@ -1,0 +1,16 @@
+# フロントエンドの除外
+frontend/node_modules
+frontend/.next
+frontend/out
+frontend/.env.local
+
+# バックエンドの除外
+backend/node_modules
+backend/dist
+backend/.env.local
+
+# 共通の除外
+.git
+.github
+.vscode
+.DS_Store

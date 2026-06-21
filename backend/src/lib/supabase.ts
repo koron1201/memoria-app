@@ -1,3 +1,5 @@
+// backend/src/lib/supabase.ts
+
 import { createClient } from '@supabase/supabase-js'
 
 // デバッグ用にログを仕込む
@@ -10,6 +12,9 @@ const supabaseUrl = process.env.SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
 export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
+
+// 👇 短冊機能（tanzaku.ts）向けに通常用の変数名としてもエクスポートする
+export const supabase = supabaseAdmin;
 
 /**
  * フロントから送られた Authorization ヘッダー（Bearer トークン）を検証し、ユーザー情報を返す

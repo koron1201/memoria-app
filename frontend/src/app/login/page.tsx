@@ -12,14 +12,12 @@ export default function WelcomePage() {
     const router = useRouter();
 
     const handleGoogleLogin = async () => {
-        // 【修正1】Googleの画面にリダイレクトされる「前」に保存する
         localStorage.setItem(ONBOARDED_KEY, "true");
 
         await supabase.auth.signInWithOAuth({
             provider: "google",
             options: {
-                // 【修正2】Next.jsのSSRエラーを防ぐための安全な書き方
-                redirectTo: typeof window !== "undefined" ? `${window.location.origin}/` : "/",
+            redirectTo: `${window.location.origin}/auth/callback`, // ← 修正
             },
         });
     };

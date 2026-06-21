@@ -2,7 +2,8 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { healthRoute } from "./health-route";
 import analyzeRouter from './analyze';
-import authRouter from './auth'; // 1. authRouter をインポート
+import authRouter from './auth';       // 両方残す！
+import tanzakuRouter from "./tanzaku"; // 両方残す！
 
 export function createApp(): Hono {
   const app = new Hono();
@@ -13,9 +14,8 @@ export function createApp(): Hono {
   app.route("/health", healthRoute);
 
   app.route('/api/analyze', analyzeRouter);
-  
-  // 2. /api/auth というパスで authRouter を登録
-  app.route('/api/auth', authRouter); 
+  app.route('/api/auth', authRouter);       // 両方登録する！
+  app.route("/api/tanzaku", tanzakuRouter); // 両方登録する！
 
   return app;
 }
