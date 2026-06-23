@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useId } from "react";
 import { cn } from "@/lib/utils";
 
@@ -43,11 +44,14 @@ export function Avatar({
       )}
     >
       {src ? (
-        <img
+        <Image
           src={src}
           alt=""
-          className="size-full object-cover"
+          fill
+          sizes="(max-width: 640px) 96px, 128px"
+          className="object-cover"
           draggable={false}
+          unoptimized
         />
       ) : (
         <>
