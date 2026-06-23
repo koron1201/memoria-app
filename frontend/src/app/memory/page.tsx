@@ -1,15 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { motion, AnimatePresence } from "framer-motion";
-import { AppHeader } from "@/components/app-header"; // Home基準
-import { pageTransition, transitions } from "@/lib/motion"; // Home基準
 import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  ArrowLeft,
+  Bookmark,
+  ChevronLeft,
+  ChevronRight,
+  Grid2X2,
+  MoreHorizontal,
+  Pencil,
+} from "lucide-react";
+import {
+  DottedDivider,
+  NotebookHeader,
+  NotebookSectionTitle,
+  NotebookSheet,
+  NotebookSideTabs,
+  WashiTape,
+} from "@/components/notebook-shell";
+import { pageTransition, transitions } from "@/lib/motion";
 import { toAlbumMemory, type MemoryAlbumItem, type MemoryAnimalId } from "@/lib/memory-records";
+import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
-// Memoryページ専用の動物定義
 export interface MemoryAnimal {
   id: MemoryAnimalId;
   label: string;
@@ -20,13 +36,13 @@ export interface MemoryAnimal {
 const MEMORY_ANIMALS: MemoryAnimal[] = [
   { id: "lion", label: "情熱的なライオン", emoji: "🦁", accent: "#D4847A" },
   { id: "rabbit", label: "思慮深いウサギ", emoji: "🐰", accent: "#C9A87C" },
-  { id: "cat", label: "自由なネコ", emoji: "🐱", accent: "#9BB5A5" },
+  { id: "cat", label: "自由っぽいネコ", emoji: "🐱", accent: "#9BB5A5" },
   { id: "bear", label: "穏やかなクマ", emoji: "🐻", accent: "#6B8F7A" },
   { id: "fox", label: "好奇心旺盛なキツネ", emoji: "🦊", accent: "#C4B59A" },
 ];
 
 export function getMemoryAnimal(id: MemoryAnimalId): MemoryAnimal {
-  return MEMORY_ANIMALS.find((a) => a.id === id) ?? MEMORY_ANIMALS[2]; // default to cat
+  return MEMORY_ANIMALS.find((a) => a.id === id) ?? MEMORY_ANIMALS[2];
 }
 
 function formatMemoryDate(createdAt: string) {
@@ -37,6 +53,35 @@ function formatMemoryDate(createdAt: string) {
     month: "long",
     day: "numeric",
   });
+}
+
+function formatShortDate(createdAt: string) {
+  const d = new Date(createdAt);
+  if (Number.isNaN(d.getTime())) return createdAt;
+  const week = ["日", "月", "火", "水", "木", "金", "土"][d.getDay()];
+  return `${d.getMonth() + 1}/${d.getDate()}(${week})`;
+}
+
+function getPolaroidMotto(memory: MemoryAlbumItem) {
+  const text = `${memory.diaryText} ${memory.emotion}`;
+
+  if (/(カフェ|読書|本|静寂|安らぎ|穏やか|光)/.test(text)) {
+    return "静かなひとときは、心の宝物。";
+  }
+  if (/(友|家族|会話|笑|一緒|再会|つなが)/.test(text)) {
+    return "笑い合う時間が、いちばんの贈りもの。";
+  }
+  if (/(海|空|山|森|花|自然|風|景色|散歩)/.test(text)) {
+    return "風にふれた心は、少し軽くなる。";
+  }
+  if (/(挑戦|頑張|できた|達成|勇気|成長)/.test(text)) {
+    return "小さな一歩も、未来を照らす。";
+  }
+  if (/(寂|涙|不安|迷|疲|悲)/.test(text)) {
+    return "弱い日も、やさしく抱きしめていい。";
+  }
+
+  return "小さな今日が、明日の宝物。";
 }
 
 export default function MemoryAlbumPage() {
@@ -62,21 +107,9 @@ export default function MemoryAlbumPage() {
     fetchAllMemories();
   }, []);
 
-  if (loading) return (
-    <div className="flex min-h-screen items-center justify-center bg-mono-cream/20 font-serif opacity-50">
-      アルバムを開いています...
-    </div>
-  );
-  
-  if (memories.length === 0) return (
-    <div className="flex min-h-screen items-center justify-center bg-mono-cream/20 font-serif opacity-50">
-      まだ思い出が記録されていません。
-    </div>
-  );
-
-  const current = memories[currentIndex]!;
-  const animal = getMemoryAnimal(current.animalId);
-  const formattedDate = formatMemoryDate(current.createdAt);
+  const current = memories[currentIndex] ?? null;
+  const animal = current ? getMemoryAnimal(current.animalId) : getMemoryAnimal("cat");
+  const formattedDate = current ? formatMemoryDate(current.createdAt) : "MEMORIA";
 
   const paginate = (newDirection: number) => {
     const nextIndex = currentIndex + newDirection;
@@ -93,196 +126,331 @@ export default function MemoryAlbumPage() {
   };
 
   return (
-    <motion.div {...pageTransition} className="min-h-screen overflow-hidden bg-[#EBE3D5]">
-      {/* Home基準のヘッダー */}
-      <AppHeader date={formattedDate} eyebrow="思い出アルバム" />
-
-      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-5 px-5 pb-10 pt-5 lg:grid-cols-[minmax(0,1fr)_17rem] lg:gap-5 lg:pt-7">
-        <div className="min-w-0">
-          <div className="relative mx-auto flex aspect-[1.4/1] w-full max-w-5xl items-center justify-center">
-            {/* 本の土台 */}
-            <div className="absolute inset-0 rounded-xl border-y-2 border-r-2 border-[#D1C7B7] bg-[#FAF9F6] shadow-2xl" />
-            <div
-              className="pointer-events-none absolute inset-y-5 left-1/2 z-10 w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-black/12 to-transparent"
-              aria-hidden
-            />
-            <div
-              className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-white/55"
-              aria-hidden
-            />
-
-            <AnimatePresence initial={false} custom={direction} mode="wait">
-              <motion.div
-                key={currentIndex}
-                custom={direction}
-                variants={{
-                  enter: (d: number) => ({ x: d > 0 ? 500 : -500, opacity: 0, rotateY: d > 0 ? 45 : -45 }),
-                  center: { x: 0, opacity: 1, rotateY: 0 },
-                  exit: (d: number) => ({ x: d > 0 ? -500 : 500, opacity: 0, rotateY: d > 0 ? -45 : 45 }),
-                }}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={transitions.gentle} // Home基準のtransition
-                className="absolute inset-0 flex"
+    <motion.main {...pageTransition} className="relative min-h-[calc(100vh-var(--nav-height))]">
+      <NotebookSheet maxWidth="max-w-[76rem]">
+        <NotebookSideTabs active="memory" />
+        <NotebookHeader
+          eyebrow="思い出アルバム"
+          title={formattedDate}
+          page="MEMORIA album"
+          action={
+            <div className="hidden items-center gap-3 sm:flex">
+              <Link
+                href="/"
+                className="grid size-10 place-items-center rounded-full bg-white/45 text-mono-ink ring-1 ring-mono-ink/8 transition hover:bg-white/75"
+                aria-label="ホームへ戻る"
               >
-                {/* 左ページ: 写真 */}
-                <div className="flex flex-1 items-center justify-center border-r border-black/10 bg-[#FAF9F6] p-4 shadow-[inset_-10px_0_10px_-10px_rgba(0,0,0,0.1)] sm:p-8">
-                  <div className="relative aspect-square w-full rotate-[-1deg] overflow-hidden border-[6px] border-white bg-gray-100 shadow-lg sm:border-[8px]">
-                    <Image src={current.imageUrl} alt="" fill className="object-cover" unoptimized />
-                  </div>
-                </div>
-
-                {/* 右ページ: 内容 */}
-                <div className="flex flex-1 flex-col justify-center bg-[#FAF9F6] p-5 font-serif text-[#4A443F] sm:p-10">
-                  <time className="mb-4 border-b border-[#D1C7B7] pb-1 text-[10px] tracking-widest text-muted-foreground">
-                    {formattedDate}
-                  </time>
-                  <p className="min-h-[7.5rem] overflow-hidden text-xs leading-loose opacity-90 [display:-webkit-box] [-webkit-line-clamp:8] [-webkit-box-orient:vertical] sm:text-sm">
-                    {current.diaryText}
-                  </p>
-                  <div className="mt-6 flex flex-wrap gap-2 sm:mt-8">
-                    {/* Home基準の色とアイコンを使用 */}
-                    <span
-                      className="rounded-full border px-3 py-1 text-[10px]"
-                      style={{ backgroundColor: `${animal.accent}15`, color: animal.accent, borderColor: `${animal.accent}30` }}
-                    >
-                      {animal.emoji} {animal.label}
-                    </span>
-                    <span className="rounded-full bg-black/5 px-3 py-1 text-[10px] italic opacity-60">
-                      # {current.emotion}
-                    </span>
-                  </div>
-                </div>
-              </motion.div>
-            </AnimatePresence>
-
-            {/* 補助ボタン */}
-            <div className="pointer-events-none absolute inset-x-0 top-1/2 z-20 flex -translate-y-1/2 justify-between px-3">
+                <ArrowLeft className="size-4" aria-hidden />
+              </Link>
               <button
-                onClick={() => paginate(-1)}
-                disabled={currentIndex === 0}
-                className="pointer-events-auto flex size-9 items-center justify-center rounded-full border border-white/65 bg-white/65 text-[#4A443F] shadow-lg backdrop-blur transition-all hover:bg-white disabled:opacity-0 active:scale-95"
-                aria-label="前の思い出"
+                type="button"
+                className="grid size-10 place-items-center rounded-full bg-white/45 text-mono-ink ring-1 ring-mono-ink/8"
+                aria-label="その他"
               >
-                ←
+                <MoreHorizontal className="size-4" aria-hidden />
               </button>
               <button
-                onClick={() => paginate(1)}
-                disabled={currentIndex === memories.length - 1}
-                className="pointer-events-auto flex size-9 items-center justify-center rounded-full border border-white/65 bg-white/65 text-[#4A443F] shadow-lg backdrop-blur transition-all hover:bg-white disabled:opacity-0 active:scale-95"
-                aria-label="次の思い出"
+                type="button"
+                className="inline-flex items-center gap-2 rounded-full bg-white/55 px-4 py-2 text-sm font-semibold text-mono-ink ring-1 ring-mono-ink/8"
               >
-                →
+                <Bookmark className="size-4" aria-hidden />
+                しおりに追加
               </button>
             </div>
-          </div>
-
-          <div className="mt-4 text-center font-serif text-[11px] tracking-[0.16em] text-[#4A443F]/45">
-            {currentIndex + 1} / {memories.length} ページ
-          </div>
-        </div>
-
-        <MemoryListPanel
-          memories={memories}
-          currentIndex={currentIndex}
-          onSelect={selectMemory}
+          }
         />
-      </div>
-    </motion.div>
+
+        {loading && <EmptyState text="アルバムを開いています..." />}
+        {!loading && memories.length === 0 && <EmptyState text="まだ思い出が記録されていません。" />}
+
+        {!loading && current && (
+          <>
+            <div className="mt-8">
+              <OpenBook
+                current={current}
+                animal={animal}
+                currentIndex={currentIndex}
+                direction={direction}
+                total={memories.length}
+                onPrev={() => paginate(-1)}
+                onNext={() => paginate(1)}
+              />
+            </div>
+
+            <div className="mt-8 border-t border-mono-linen/45 pt-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <NotebookSectionTitle title="思い出一覧" icon={Grid2X2} className="mb-0" />
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="rounded-full bg-white/50 px-4 py-2 text-[12px] font-semibold text-mono-ink ring-1 ring-mono-ink/8"
+                  >
+                    新しい順
+                  </button>
+                  <div className="rounded-full bg-white/45 p-1 ring-1 ring-mono-ink/8">
+                    <Grid2X2 className="size-4 text-primary" aria-hidden />
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 flex gap-4 overflow-x-auto pb-2 scrollbar-none">
+                {memories.map((memory, index) => (
+                  <MemoryThumb
+                    key={memory.id}
+                    memory={memory}
+                    active={index === currentIndex}
+                    latest={index === 0}
+                    onSelect={() => selectMemory(index)}
+                  />
+                ))}
+              </div>
+
+              <div className="mt-5 flex justify-center">
+                <div className="inline-flex items-center gap-8 rounded-full bg-white/52 px-7 py-2 text-sm text-mono-ink ring-1 ring-mono-ink/8">
+                  <button
+                    type="button"
+                    onClick={() => paginate(-1)}
+                    disabled={currentIndex === 0}
+                    className="disabled:opacity-30"
+                    aria-label="前のページ"
+                  >
+                    <ChevronLeft className="size-4" aria-hidden />
+                  </button>
+                  <span className="tabular-nums">
+                    {currentIndex + 1} / {memories.length} ページ
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => paginate(1)}
+                    disabled={currentIndex === memories.length - 1}
+                    className="disabled:opacity-30"
+                    aria-label="次のページ"
+                  >
+                    <ChevronRight className="size-4" aria-hidden />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </NotebookSheet>
+    </motion.main>
   );
 }
 
-function MemoryListPanel({
-  memories,
+function EmptyState({ text }: { text: string }) {
+  return (
+    <div className="mt-8 rounded-[1.2rem] border border-mono-linen/35 bg-white/50 px-5 py-16 text-center font-serif text-sm text-muted-foreground shadow-soft">
+      {text}
+    </div>
+  );
+}
+
+function OpenBook({
+  current,
+  animal,
   currentIndex,
-  onSelect,
+  direction,
+  total,
+  onPrev,
+  onNext,
 }: {
-  memories: MemoryAlbumItem[];
+  current: MemoryAlbumItem;
+  animal: MemoryAnimal;
   currentIndex: number;
-  onSelect: (index: number) => void;
+  direction: number;
+  total: number;
+  onPrev: () => void;
+  onNext: () => void;
 }) {
   return (
-    <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
-      <div className="rounded-2xl border border-white/45 bg-[#FAF9F6]/42 p-2.5 shadow-soft backdrop-blur-[14px]">
-        <div className="mb-2.5 flex items-end justify-between px-1">
-          <div>
-            <p className="text-[9px] font-semibold tracking-[0.22em] text-[#8B7355]/55">
-              INDEX
-            </p>
-            <h2 className="mt-0.5 text-xs font-semibold tracking-tight text-[#4A443F]/85">
-              思い出一覧
-            </h2>
-          </div>
-          <span className="rounded-full border border-[#D1C7B7]/55 bg-white/35 px-2 py-0.5 text-[9px] tabular-nums text-[#8B7355]/75">
-            {memories.length}
-          </span>
-        </div>
+    <div className="relative">
+      <div className="pointer-events-none absolute inset-x-6 bottom-[-18px] h-14 rounded-[50%] bg-mono-ink/16 blur-2xl" aria-hidden />
+      <div className="relative mx-auto w-full overflow-hidden rounded-[0.45rem] border border-[#d8cab7] bg-[#ded2bf] p-1 shadow-[0_28px_70px_rgba(58,49,38,0.18),0_8px_24px_rgba(58,49,38,0.10)] ring-1 ring-white/55">
+        <div className="pointer-events-none absolute inset-x-2 top-1 h-3 rounded-t-[0.35rem] bg-white/35" aria-hidden />
+        <div className="pointer-events-none absolute inset-x-3 bottom-1 h-2 rounded-b-[0.35rem] bg-mono-ink/8" aria-hidden />
+        <div className="relative overflow-hidden rounded-[0.32rem] bg-[#f8f1e4] shadow-[inset_0_1px_0_rgba(255,255,255,0.85),inset_0_-10px_24px_rgba(91,75,52,0.08)]">
+          <span className="noise-layer pointer-events-none absolute inset-0 z-10" aria-hidden />
+          <span
+            className="pointer-events-none absolute inset-y-0 left-1/2 z-20 hidden w-16 -translate-x-1/2 lg:block"
+            style={{
+              background:
+                "linear-gradient(90deg, transparent 0%, rgba(86,70,48,0.08) 28%, rgba(255,255,255,0.34) 48%, rgba(65,50,36,0.16) 52%, rgba(86,70,48,0.08) 72%, transparent 100%)",
+            }}
+            aria-hidden
+          />
+          <span
+            className="pointer-events-none absolute inset-y-6 left-1/2 z-30 hidden w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-mono-ink/20 to-transparent lg:block"
+            aria-hidden
+          />
+        <AnimatePresence initial={false} custom={direction} mode="wait">
+          <motion.div
+            key={current.id}
+            custom={direction}
+            variants={{
+              enter: (d: number) => ({ x: d > 0 ? 90 : -90, opacity: 0 }),
+              center: { x: 0, opacity: 1 },
+              exit: (d: number) => ({ x: d > 0 ? -90 : 90, opacity: 0 }),
+            }}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={transitions.gentle}
+            className="grid min-h-[38rem] grid-cols-1 lg:grid-cols-2"
+          >
+            <div
+              className="relative flex min-h-[25rem] items-center justify-center overflow-hidden border-b border-[#d9cbb7]/70 bg-[#fbf5e9] px-6 py-9 shadow-[inset_-28px_0_34px_-34px_rgba(58,49,38,0.72)] sm:px-9 lg:min-h-[38rem] lg:border-b-0 lg:border-r lg:px-12"
+              style={{
+                backgroundImage:
+                  "radial-gradient(rgba(74,60,42,0.035) 0.7px, transparent 0.7px), linear-gradient(90deg, rgba(255,255,255,0.5), transparent 28%, rgba(99,78,52,0.035) 100%)",
+                backgroundSize: "15px 15px, 100% 100%",
+              }}
+            >
+              <Polaroid current={current} />
+            </div>
 
-        <div className="max-h-[56vh] space-y-1.5 overflow-y-auto pr-0.5">
-          {memories.map((memory, index) => {
-            const active = index === currentIndex;
-            const animal = getMemoryAnimal(memory.animalId);
-            return (
-              <button
-                key={memory.id}
-                type="button"
-                onClick={() => onSelect(index)}
-                aria-current={active ? "true" : undefined}
-                className={cn(
-                  "group grid w-full grid-cols-[3rem_minmax(0,1fr)] gap-2.5 rounded-xl border p-1.5 text-left transition-all",
-                  active
-                    ? "border-[#D1C7B7]/55 bg-white/58 shadow-ambient"
-                    : "border-transparent bg-transparent opacity-72 hover:border-white/45 hover:bg-white/35 hover:opacity-100",
-                )}
+            <article
+              className="relative flex min-h-[25rem] flex-col bg-[#fbf5e9] px-8 py-10 font-serif text-mono-ink shadow-[inset_28px_0_34px_-34px_rgba(58,49,38,0.72)] sm:px-12 lg:min-h-[38rem] lg:px-16 lg:py-16"
+              style={{
+                backgroundImage:
+                  "radial-gradient(rgba(74,60,42,0.03) 0.7px, transparent 0.7px)",
+                backgroundSize: "15px 15px",
+              }}
+            >
+              <time className="w-full border-b border-[#d8c9b2]/70 pb-3 text-[10px] tracking-[0.12em] text-muted-foreground">
+                {formatMemoryDate(current.createdAt)}
+              </time>
+              <p
+                className="mt-7 max-w-[31rem] whitespace-pre-line pb-px text-[13px] leading-[2.15rem] text-mono-ink/84"
+                style={{
+                  backgroundImage:
+                    "repeating-linear-gradient(to bottom, transparent 0 calc(2.15rem - 1px), rgba(146,120,84,0.18) calc(2.15rem - 1px) 2.15rem)",
+                }}
               >
-                <div className="relative aspect-square overflow-hidden rounded-lg bg-[#E5D9C7] ring-1 ring-black/5">
-                  <Image
-                    src={memory.imageUrl}
-                    alt=""
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    sizes="60px"
-                    unoptimized
-                  />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <time className="text-[9px] tabular-nums text-[#8B7355]/70">
-                      {formatMemoryDate(memory.createdAt)}
-                    </time>
-                    {active && (
-                      <span
-                        className="h-1.5 w-1.5 rounded-full opacity-80"
-                        style={{ background: animal.accent }}
-                        aria-hidden
-                      />
-                    )}
-                  </div>
-                  <p className="mt-0.5 line-clamp-2 text-[11px] font-medium leading-relaxed text-[#4A443F]/88">
-                    {memory.diaryText}
-                  </p>
-                  <div className="mt-1 flex items-center gap-1.5">
-                    <span
-                      className="rounded-full border px-1.5 py-0.5 text-[8px]"
-                      style={{
-                        backgroundColor: `${animal.accent}12`,
-                        borderColor: `${animal.accent}28`,
-                        color: animal.accent,
-                      }}
-                    >
-                      {animal.emoji}
-                    </span>
-                    <span className="truncate text-[9px] text-[#8B7355]/65">
-                      {memory.emotion}
-                    </span>
-                  </div>
-                </div>
-              </button>
-            );
-          })}
+                {current.diaryText}
+              </p>
+              <div className="mt-auto flex flex-wrap gap-2 pt-10">
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[10px] font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]"
+                  style={{
+                    backgroundColor: `${animal.accent}16`,
+                    borderColor: `${animal.accent}34`,
+                    color: animal.accent,
+                  }}
+                >
+                  {animal.emoji} {animal.label}
+                </span>
+                <span className="rounded-full bg-white/58 px-3 py-1 text-[10px] text-mono-ink/68 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] ring-1 ring-mono-ink/5">
+                  # {current.emotion}
+                </span>
+              </div>
+            </article>
+          </motion.div>
+        </AnimatePresence>
         </div>
       </div>
-    </aside>
+
+      <button
+        type="button"
+        onClick={onPrev}
+        disabled={currentIndex === 0}
+        className="absolute left-3 top-1/2 z-30 grid size-10 -translate-y-1/2 place-items-center rounded-full bg-white/82 text-mono-ink shadow-soft ring-1 ring-mono-ink/8 backdrop-blur disabled:opacity-0"
+        aria-label="前の思い出"
+      >
+        <ChevronLeft className="size-4" aria-hidden />
+      </button>
+      <button
+        type="button"
+        onClick={onNext}
+        disabled={currentIndex === total - 1}
+        className="absolute right-3 top-1/2 z-30 grid size-10 -translate-y-1/2 place-items-center rounded-full bg-white/82 text-mono-ink shadow-soft ring-1 ring-mono-ink/8 backdrop-blur disabled:opacity-0"
+        aria-label="次の思い出"
+      >
+        <ChevronRight className="size-4" aria-hidden />
+      </button>
+      <Link
+        href={`/memory/${current.id}`}
+        className="absolute right-[-0.45rem] top-[57%] z-30 grid size-11 place-items-center rounded-full bg-white/90 text-mono-ink shadow-soft ring-1 ring-mono-ink/8 backdrop-blur"
+        aria-label="思い出を編集する"
+      >
+        <Pencil className="size-4" aria-hidden />
+      </Link>
+    </div>
+  );
+}
+
+function Polaroid({ current }: { current: MemoryAlbumItem }) {
+  const motto = getPolaroidMotto(current);
+
+  return (
+    <div className="relative w-full max-w-[22rem] rotate-[-1.4deg] bg-[#fffdf8] p-3 pb-16 shadow-[0_18px_32px_rgba(58,49,38,0.14),0_3px_8px_rgba(58,49,38,0.08)] ring-1 ring-mono-ink/8">
+      <WashiTape className="-top-4 left-14 h-7 w-20 opacity-80" />
+      <span className="noise-layer pointer-events-none absolute inset-0" aria-hidden />
+      <div className="relative aspect-[1.06/1] overflow-hidden bg-mono-cream shadow-[inset_0_0_0_1px_rgba(58,49,38,0.05)]">
+        <Image src={current.imageUrl} alt="" fill className="object-cover" sizes="360px" unoptimized />
+      </div>
+      <p className="mx-auto mt-5 max-w-[17.5rem] text-center font-serif text-[1.02rem] font-semibold leading-relaxed text-mono-ink/86">
+        <span className="mb-1 block text-[10px] font-sans font-bold tracking-[0.18em] text-[#d998a8]">
+          MEMORY WORDS
+        </span>
+        <span className="relative inline-block px-2">
+          <span className="absolute -left-1 top-0 text-[#e9b7a2]" aria-hidden>
+            “
+          </span>
+          {motto}
+          <span className="absolute -right-1 bottom-0 text-[#e9b7a2]" aria-hidden>
+            ”
+          </span>
+        </span>
+      </p>
+      <div className="absolute bottom-4 right-6 flex items-end gap-1.5 text-[#e5a695]" aria-hidden>
+        <span className="text-2xl leading-none">❀</span>
+        <span className="text-lg leading-none opacity-80">✿</span>
+        <span className="text-xl leading-none text-[#d9c76f]">✤</span>
+      </div>
+    </div>
+  );
+}
+
+function MemoryThumb({
+  memory,
+  active,
+  latest,
+  onSelect,
+}: {
+  memory: MemoryAlbumItem;
+  active: boolean;
+  latest: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-current={active ? "true" : undefined}
+      className={cn(
+        "w-[8.6rem] shrink-0 rounded-[1rem] bg-white/55 p-2 text-left shadow-ambient ring-1 ring-mono-ink/7 transition hover:-translate-y-0.5 hover:bg-white/75",
+        active && "ring-2 ring-primary/55",
+      )}
+    >
+      <div className="relative aspect-square overflow-hidden rounded-[0.75rem] bg-mono-cream">
+        <Image src={memory.imageUrl} alt="" fill sizes="140px" className="object-cover" unoptimized />
+      </div>
+      <div className="mt-2 flex items-center gap-2">
+        {latest && (
+          <span className="rounded bg-primary px-1.5 py-0.5 text-[8px] font-bold text-primary-foreground">
+            NEW
+          </span>
+        )}
+        <time className="text-[10px] text-muted-foreground">{formatShortDate(memory.createdAt)}</time>
+      </div>
+      <p className="mt-1 line-clamp-2 text-[11px] font-semibold leading-relaxed text-mono-ink">
+        {memory.diaryText}
+      </p>
+      <DottedDivider className="mt-2" />
+      <span className="mt-2 inline-block rounded-full bg-mono-cream/70 px-2 py-0.5 text-[10px] text-mono-ink/70">
+        {memory.emotion}
+      </span>
+    </button>
   );
 }

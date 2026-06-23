@@ -7,13 +7,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAuthRoute =
     pathname === "/login" || pathname?.startsWith("/onboarding");
+  const isMemoryRoute = pathname === "/memory" || pathname?.startsWith("/memory/");
+  const isTanzakuRoute = pathname === "/tanzaku" || pathname?.startsWith("/tanzaku/");
+  const hideBottomNav = isAuthRoute || isMemoryRoute || isTanzakuRoute || pathname === "/";
 
   return (
     <>
       <main
         className="flex-1"
         style={
-          isAuthRoute
+          hideBottomNav
             ? undefined
             : {
                 paddingBottom:
@@ -23,7 +26,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       >
         {children}
       </main>
-      {!isAuthRoute && <BottomNav />}
+      {!hideBottomNav && <BottomNav />}
     </>
   );
 }

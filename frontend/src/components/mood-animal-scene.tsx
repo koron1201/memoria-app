@@ -1,6 +1,16 @@
 "use client";
 
-import { Suspense, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import {
+  Component,
+  Suspense,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, useAnimations, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
@@ -13,9 +23,10 @@ const CAMERA_MARGIN = 1.25; // フィット時の余白係数（大きいほど�
 interface AnimalModelProps {
   src: string;
   actionTick: number;
+  onReady?: () => void;
 }
 
-function AnimalModel({ src, actionTick }: AnimalModelProps) {
+function AnimalModel({ src, actionTick, onReady }: AnimalModelProps) {
   const group = useRef<THREE.Group>(null!);
   const { scene, animations } = useGLTF(src);
   const getThree = useThree((s) => s.get);
@@ -68,24 +79,47 @@ function AnimalModel({ src, actionTick }: AnimalModelProps) {
     perspective.far = distance * 10;
     perspective.lookAt(0, 0, 0);
     perspective.updateProjectionMatrix();
-  }, [clonedScene, getThree]);
+    onReady?.();
+  }, [clonedScene, getThree, onReady]);
+
+  useEffect(() => {
+    if (names.length > 0) {
+      const idleName =
+        names.find((n) =>
+          /idle|stand|breathing|default|rest|loop|walk|run/i.test(n),
+        ) ?? names[0];
+      const idle = actions[idleName];
+      if (!idle) return;
+
+      idle
+        .reset()
+        .setLoop(THREE.LoopRepeat, Infinity)
+        .setEffectiveWeight(0.85)
+        .fadeIn(0.35)
+        .play();
+
+      return () => {
+        idle.fadeOut(0.2);
+      };
+    }
+  }, [actions, names]);
 
   useEffect(() => {
     if (actionTick === 0) return;
 
     if (names.length > 0) {
-      const preferred = names.find((n) =>
-        /wave|hello|hi|action|dance|jump|greet/i.test(n),
-      );
       const idleName =
         names.find((n) =>
           /idle|stand|breathing|default|rest|loop|walk|run/i.test(n),
         ) ?? names[0];
+      const preferred = names.find((n) =>
+        /wave|hello|hi|action|dance|jump|greet/i.test(n),
+      );
       const name =
         preferred && preferred !== idleName
           ? preferred
-          : names.find((n) => n !== idleName) ?? names[0];
-      const act = actions[name];
+          : names.find((n) => n !== idleName);
+      const act = name ? actions[name] : undefined;
       if (act) {
         act
           .reset()
@@ -132,9 +166,10 @@ function AnimalModel({ src, actionTick }: AnimalModelProps) {
       return;
     }
 
-    // 待機時の呼吸：Y に 1.5% ぶん、ゆったり左右に揺らぎ
-    const breathY = Math.sin(t * 1.1) * r * 0.015;
-    const swayY = Math.sin(t * 0.35) * 0.035;
+    // 待機時の呼吸。小さい表示枠でも見えるよう、モデル全体をゆっくり動かす。
+    const breathY = Math.sin(t * 1.25) * r * 0.045;
+    const swayY = Math.sin(t * 0.55) * 0.14;
+    const tiltZ = Math.sin(t * 0.8) * 0.04;
     group.current.position.y = THREE.MathUtils.lerp(
       group.current.position.y,
       breathY,
@@ -147,8 +182,8 @@ function AnimalModel({ src, actionTick }: AnimalModelProps) {
     );
     group.current.rotation.z = THREE.MathUtils.lerp(
       group.current.rotation.z,
-      0,
-      0.1,
+      tiltZ,
+      0.08,
     );
   });
 
@@ -156,6 +191,55 @@ function AnimalModel({ src, actionTick }: AnimalModelProps) {
     <group ref={group} dispose={null}>
       <primitive object={clonedScene} />
     </group>
+  );
+}
+
+class ModelErrorBoundary extends Component<
+  {
+    children: ReactNode;
+    onError: () => void;
+    resetKey: string;
+  },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch() {
+    this.props.onError();
+  }
+
+  componentDidUpdate(prevProps: { resetKey: string }) {
+    if (prevProps.resetKey !== this.props.resetKey && this.state.hasError) {
+      this.setState({ hasError: false });
+    }
+  }
+
+  render() {
+    if (this.state.hasError) return null;
+    return this.props.children;
+  }
+}
+
+function AnimalFallback({ src, accent }: { src: string; accent: string }) {
+  const animal = MOODS.find((m) => m.glb === src) ?? MOODS[0];
+
+  return (
+    <div className="pointer-events-none absolute inset-0 grid place-items-center">
+      <div
+        className="grid size-[76%] place-items-center rounded-full bg-white/42 shadow-ambient ring-1 ring-white/55"
+        style={{
+          boxShadow: `0 18px 45px ${accent}33`,
+        }}
+      >
+        <span className="translate-y-[-0.08em] text-[clamp(3.25rem,48%,5rem)] leading-none" aria-hidden>
+          {animal.emoji}
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -174,7 +258,12 @@ export function MoodAnimalScene({
   actionTick,
   onInteract,
 }: MoodAnimalSceneProps) {
+  const [readySrc, setReadySrc] = useState<string | null>(null);
+  const modelReady = readySrc === src;
   const trigger = () => onInteract?.();
+  const handleModelReady = useCallback(() => {
+    setReadySrc(src);
+  }, [src]);
 
   return (
     <div
@@ -196,6 +285,12 @@ export function MoodAnimalScene({
           background: `radial-gradient(circle at 50% 55%, ${accent}66 0%, transparent 70%)`,
         }}
       />
+      <div
+        className={`transition-opacity duration-300 ${modelReady ? "opacity-0" : "opacity-100"}`}
+        aria-hidden={modelReady}
+      >
+        <AnimalFallback src={src} accent={accent} />
+      </div>
       <Canvas
         camera={{ position: [0, 0, 4], fov: 38 }}
         dpr={[1, 2]}
@@ -223,16 +318,22 @@ export function MoodAnimalScene({
           color={accent}
         />
         <directionalLight position={[0, -1.5, 2]} intensity={0.18} />
-        <Suspense fallback={null}>
-          <AnimalModel src={src} actionTick={actionTick} />
-          <ContactShadows
-            position={[0, -TARGET_SIZE / 2 - 0.05, 0]}
-            opacity={0.35}
-            scale={TARGET_SIZE * 3}
-            blur={2.2}
-            far={TARGET_SIZE * 2}
-          />
-        </Suspense>
+        <ModelErrorBoundary onError={() => setReadySrc(null)} resetKey={src}>
+          <Suspense fallback={null}>
+            <AnimalModel
+              src={src}
+              actionTick={actionTick}
+              onReady={handleModelReady}
+            />
+            <ContactShadows
+              position={[0, -TARGET_SIZE / 2 - 0.05, 0]}
+              opacity={0.35}
+              scale={TARGET_SIZE * 3}
+              blur={2.2}
+              far={TARGET_SIZE * 2}
+            />
+          </Suspense>
+        </ModelErrorBoundary>
       </Canvas>
     </div>
   );
