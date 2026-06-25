@@ -1,6 +1,8 @@
 // backend/src/lib/supabase.ts
 
 import { createClient } from '@supabase/supabase-js'
+import dotenv from 'dotenv'
+dotenv.config()
 
 // デバッグ用にログを仕込む
 console.log("=== Supabase 設定チェック ===");
