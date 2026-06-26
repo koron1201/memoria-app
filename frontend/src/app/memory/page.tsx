@@ -5,12 +5,10 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  ArrowLeft,
   Bookmark,
   ChevronLeft,
   ChevronRight,
   Grid2X2,
-  MoreHorizontal,
   Pencil,
 } from "lucide-react";
 import {
@@ -130,25 +128,10 @@ export default function MemoryAlbumPage() {
       <NotebookSheet maxWidth="max-w-[76rem]">
         <NotebookSideTabs active="memory" />
         <NotebookHeader
-          eyebrow="思い出アルバム"
+          eyebrow="Every feeling shapes you."
           title={formattedDate}
-          page="MEMORIA album"
           action={
             <div className="hidden items-center gap-3 sm:flex">
-              <Link
-                href="/"
-                className="grid size-10 place-items-center rounded-full bg-white/45 text-mono-ink ring-1 ring-mono-ink/8 transition hover:bg-white/75"
-                aria-label="ホームへ戻る"
-              >
-                <ArrowLeft className="size-4" aria-hidden />
-              </Link>
-              <button
-                type="button"
-                className="grid size-10 place-items-center rounded-full bg-white/45 text-mono-ink ring-1 ring-mono-ink/8"
-                aria-label="その他"
-              >
-                <MoreHorizontal className="size-4" aria-hidden />
-              </button>
               <button
                 type="button"
                 className="inline-flex items-center gap-2 rounded-full bg-white/55 px-4 py-2 text-sm font-semibold text-mono-ink ring-1 ring-mono-ink/8"

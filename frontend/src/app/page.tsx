@@ -99,7 +99,7 @@ export default function Home() {
         <FlowerFieldBackdrop />
         <div className="relative z-10">
           <NotebookHeader
-            eyebrow="今日のあなた"
+            eyebrow="Every feeling shapes you."
             title="MEMORIA"
             page={today}
             action={
