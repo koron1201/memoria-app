@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Bell,
   BookOpen,
@@ -51,7 +51,6 @@ function maskEmail(email: string | null): string {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const reduced = useReducedMotion();
   const {
     profile,
     notifications,
@@ -64,19 +63,15 @@ export default function ProfilePage() {
   const [draftName, setDraftName] = useState("");
   const partner = getAnimal("free");
 
-  const containerVariants = reduced
-    ? { initial: {}, animate: {} }
-    : {
-        initial: {},
-        animate: { transition: { staggerChildren: 0.06, delayChildren: 0.04 } },
-      };
+  const containerVariants = {
+    initial: {},
+    animate: { transition: { staggerChildren: 0.06, delayChildren: 0.04 } },
+  };
 
-  const itemVariants = reduced
-    ? { initial: {}, animate: {} }
-    : {
-        initial: { opacity: 0, y: 12 },
-        animate: { opacity: 1, y: 0, transition: transitions.gentle },
-      };
+  const itemVariants = {
+    initial: { opacity: 0, y: 12 },
+    animate: { opacity: 1, y: 0, transition: transitions.gentle },
+  };
 
   function startEdit() {
     setDraftName(profile.displayName);
@@ -119,7 +114,7 @@ export default function ProfilePage() {
     >
       <NotebookSheet maxWidth="max-w-[58rem]">
         <NotebookSideTabs active="profile" />
-        <NotebookHeader title="MEMORIA" page="マイページ ・ p.01" />
+        <NotebookHeader title="MEMORIA" />
 
         <motion.div
           variants={itemVariants}
@@ -344,7 +339,7 @@ export default function ProfilePage() {
 
         <footer className="mt-9 text-center">
           <p className="font-serif text-lg font-semibold text-[#d796a4]">
-            また書いてね、また会おうね
+            Every feeling shapes you.
           </p>
           <DottedDivider className="mx-auto mt-3 max-w-[18rem]" />
           <p className="mt-3 font-serif text-base font-bold uppercase tracking-[0.22em] text-mono-ink">
