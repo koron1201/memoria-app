@@ -265,13 +265,12 @@
 
   /* 縦書き short冊: 枠いっぱいの幅だと字がブロック開始側に寄るため、字列幅に縮めて中央へ */
   .tanzaku-vertical-input {
+    display: block;
     writing-mode: vertical-rl;
     text-orientation: mixed;
     width: max-content;
     max-width: min(100%, 14rem);
-    margin-inline: auto;
     text-align: center;
-    field-sizing: content;
   }
 }
 
