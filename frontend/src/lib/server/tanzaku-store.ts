@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 
 import type { TanzakuStep, TanzakuWish } from "@/lib/api/tanzaku";
+import { makeStepDueDatesFromToday } from "@/lib/tanzaku-dates";
 
 type TanzakuRecord = {
   id: string;
@@ -50,11 +51,7 @@ function toRecord(item: TanzakuWish): TanzakuRecord {
 }
 
 function fallbackDate(deadline: string | null, index: number, total: number) {
-  const end = deadline ? new Date(`${deadline}T12:00:00`) : new Date(Date.now() + 1000 * 60 * 60 * 24 * 180);
-  if (Number.isNaN(end.getTime())) return "";
-  const date = new Date(end);
-  date.setDate(end.getDate() - (total - index - 1) * 14);
-  return date.toISOString().slice(0, 10);
+  return makeStepDueDatesFromToday(total, deadline)[index] ?? "";
 }
 
 function fallbackSteps(dream: string, deadline: string | null): TanzakuStep[] {
@@ -80,13 +77,12 @@ function fallbackSteps(dream: string, deadline: string | null): TanzakuStep[] {
 function normalizeSteps(raw: unknown, dream: string, deadline: string | null): TanzakuStep[] {
   const steps = (raw as { steps?: Partial<TanzakuStep>[] })?.steps;
   if (!Array.isArray(steps)) return fallbackSteps(dream, deadline);
-  const normalized = steps.slice(0, 10).map((step, index) => ({
+  const plannedSteps = steps.slice(0, 10);
+  const dueDates = makeStepDueDatesFromToday(plannedSteps.length, deadline);
+  const normalized = plannedSteps.map((step, index) => ({
     title: typeof step.title === "string" && step.title.trim() ? step.title.trim() : `ステップ${index + 1}`,
     detail: typeof step.detail === "string" && step.detail.trim() ? step.detail.trim() : "具体的な行動を一つ決めて進める。",
-    dueDate:
-      typeof step.dueDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(step.dueDate)
-        ? step.dueDate
-        : fallbackDate(deadline, index, steps.length),
+    dueDate: dueDates[index] ?? fallbackDate(deadline, index, plannedSteps.length),
     done: false,
     completedAt: null,
   }));
