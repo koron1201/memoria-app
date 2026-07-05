@@ -13,6 +13,7 @@ import {
 import { pageTransition } from "@/lib/motion";
 import { RouteAtmosphere } from "@/components/route-atmosphere";
 import { tanzakuApi, type TanzakuStep, type TanzakuWish } from "@/lib/api/tanzaku";
+import { rebaseStepDueDatesFromToday } from "@/lib/tanzaku-dates";
 import { cn } from "@/lib/utils";
 
 type StarPoint = {
@@ -268,6 +269,7 @@ function RoadmapConstellation({
           <button
             key={`${step.title}-${index}`}
             type="button"
+            aria-label={`${index + 1}. ${step.title}`}
             onClick={() => onSelect(index)}
             className="absolute z-10 grid w-[9.6rem] -translate-x-1/2 place-items-center text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#82915d]/50 max-sm:w-[8.1rem]"
             style={{ left: `${point.x}%`, top: `${point.y}%` }}
@@ -288,9 +290,6 @@ function RoadmapConstellation({
               >
                 {index + 1}
               </span>
-            </span>
-            <span className="mt-3 line-clamp-2 font-serif text-base font-semibold leading-snug text-mono-ink/82 max-sm:text-sm">
-              {step.title}
             </span>
           </button>
         );
@@ -534,8 +533,12 @@ export default function RoadmapPage({
       .get(id)
       .then((item) => {
         if (ignore) return;
-        setWish(item);
-        setSelectedStep(currentStepIndex(item.steps));
+        const adjustedItem = {
+          ...item,
+          steps: rebaseStepDueDatesFromToday(item.steps, item.deadline),
+        };
+        setWish(adjustedItem);
+        setSelectedStep(currentStepIndex(adjustedItem.steps));
       })
       .catch(() => {
         if (!ignore) setError("ロードマップを読み込めませんでした。");
