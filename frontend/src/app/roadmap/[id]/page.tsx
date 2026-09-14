@@ -76,9 +76,6 @@ function RoadmapTopBar() {
       </button>
       <p className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-baseline gap-3 font-serif text-[1.55rem] font-semibold tracking-[0.18em] text-[#71824f] max-sm:text-[1.08rem]">
         MEMORIA
-        <span className="font-sans text-[1.32rem] font-semibold tracking-[0.06em] text-[#d48397] max-sm:text-[0.95rem]">
-          wishes
-        </span>
       </p>
       <span className="size-14 max-sm:size-12" aria-hidden />
     </header>

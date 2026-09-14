@@ -217,9 +217,6 @@ function WishTopBar() {
     <header className="relative flex min-h-16 items-center justify-center pr-0 min-[760px]:pr-14">
       <p className="flex items-baseline gap-3 font-serif text-[1.55rem] font-semibold tracking-[0.18em] text-[#71824f] max-sm:text-[1.1rem]">
         MEMORIA
-        <span className="font-sans text-[1.32rem] font-semibold tracking-[0.06em] text-[#d48397] max-sm:text-[0.95rem]">
-          wishes
-        </span>
       </p>
     </header>
   );
