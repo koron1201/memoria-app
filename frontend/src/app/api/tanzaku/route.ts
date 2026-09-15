@@ -12,8 +12,8 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const item = await createTanzaku({
-      dream: typeof body.dream === "string" ? body.dream : "",
-      deadline: typeof body.deadline === "string" ? body.deadline : null,
+      dream: typeof body?.dream === "string" ? body.dream : "",
+      deadline: body?.deadline,
     });
     return NextResponse.json(item, { status: 201 });
   } catch (error) {

@@ -23,6 +23,8 @@ import { RouteAtmosphere } from "@/components/route-atmosphere";
 import { tanzakuApi } from "@/lib/api/tanzaku";
 import { cn } from "@/lib/utils";
 
+import { todayInJapan, validateDeadline } from "@/lib/tanzaku-dates";
+
 const MAX_LEN = 40;
 
 const hintChips = [
@@ -33,6 +35,7 @@ const hintChips = [
 ] as const;
 
 function formatDateJp(ymd: string) {
+  if (!ymd) return "期限を選ぶ（未指定）";
   const d = new Date(ymd + "T12:00:00");
   if (Number.isNaN(d.getTime())) return ymd;
   return d.toLocaleDateString("ja-JP", {
@@ -51,21 +54,13 @@ function toYmd(date: Date) {
 
 export default function TanzakuPage() {
   const router = useRouter();
-  const [dream, setDream] = useState(() => {
-    if (typeof window === "undefined") {
-      return "自分の言葉で誰かの心を動かせる人になりたい";
-    }
-    const params = new URLSearchParams(window.location.search);
-    return params.get("fresh") === "1"
-      ? ""
-      : "自分の言葉で誰かの心を動かせる人になりたい";
-  });
-  const [deadline, setDeadline] = useState("2026-12-31");
+  const [dream, setDream] = useState("");
+  const [deadline, setDeadline] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [pastCount, setPastCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [calendarMonth, setCalendarMonth] = useState(() => new Date("2026-12-01T12:00:00"));
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date(`${todayInJapan()}T12:00:00`));
 
   useEffect(() => {
     let ignore = false;
@@ -100,6 +95,8 @@ export default function TanzakuPage() {
   };
 
   const selectDate = (date: Date) => {
+    if (toYmd(date) < todayInJapan()) return;
+    setError(null);
     setDeadline(toYmd(date));
     setCalendarOpen(false);
   };
@@ -109,6 +106,7 @@ export default function TanzakuPage() {
     setIsSending(true);
     setError(null);
     try {
+      validateDeadline(deadline || null);
       const item = await tanzakuApi.create({
         dream: dream.trim(),
         deadline: deadline || null,
@@ -194,6 +192,11 @@ export default function TanzakuPage() {
                 onMoveMonth={moveCalendarMonth}
                 onSelectDate={selectDate}
               />
+              {deadline && (
+                <button type="button" onClick={() => { setDeadline(""); setError(null); }} className="text-sm text-mono-ink/68 underline">
+                  期限を未指定にする
+                </button>
+              )}
               <SubmitWishButton disabled={!dream.trim() || isSending} sending={isSending} onClick={sendTanzaku} />
             </section>
 
@@ -217,9 +220,6 @@ function WishTopBar() {
     <header className="relative flex min-h-16 items-center justify-center pr-0 min-[760px]:pr-14">
       <p className="flex items-baseline gap-3 font-serif text-[1.55rem] font-semibold tracking-[0.18em] text-[#71824f] max-sm:text-[1.1rem]">
         MEMORIA
-        <span className="font-sans text-[1.32rem] font-semibold tracking-[0.06em] text-[#d48397] max-sm:text-[0.95rem]">
-          wishes
-        </span>
       </p>
     </header>
   );
@@ -290,7 +290,8 @@ function TanzakuInput({
             spellCheck={false}
             rows={1}
             className="tanzaku-vertical-input h-full max-h-full min-h-0 resize-none overflow-y-auto bg-transparent p-0 font-serif text-[1.58rem] font-semibold leading-[2.15] tracking-wide text-[#3d3730] placeholder:text-[#8b7355]/35 focus:outline-none max-sm:text-[1.35rem]"
-            placeholder="夢を"
+            aria-label="叶えたい夢"
+            placeholder="例：自分の言葉で誰かの心を動かしたい"
           />
         </div>
         <span className="pointer-events-none absolute bottom-7 right-6 z-10 text-lg tabular-nums text-[#8b7355]/62 max-sm:text-sm">
@@ -372,9 +373,11 @@ function DatePickerField({
                   <button
                     key={ymd}
                     type="button"
+                    disabled={ymd < todayInJapan()}
+                    aria-label={ymd}
                     onClick={() => onSelectDate(date)}
                     className={cn(
-                      "grid h-9 place-content-center rounded-[0.65rem] text-sm tabular-nums transition-colors",
+                      "grid h-9 place-content-center rounded-[0.65rem] text-sm tabular-nums transition-colors disabled:opacity-30 disabled:cursor-not-allowed",
                       selected
                         ? "bg-[#768648] text-white shadow-soft"
                         : muted

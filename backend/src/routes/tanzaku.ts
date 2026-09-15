@@ -1,3 +1,4 @@
+import { todayInJapan, validateDeadline } from "../lib/tanzaku-dates";
 import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
 import { generateDreamRoadmap, type GeneratedRoadmapStep } from "../services/gemini";
@@ -45,6 +46,7 @@ function normalizeSteps(steps: GeneratedRoadmapStep[]): TanzakuStep[] {
     title: step.title,
     detail: step.detail,
     dueDate: step.dueDate,
+    generationSource: step.generationSource,
     done: false,
     completedAt: null,
   }));
@@ -139,16 +141,18 @@ async function updateRecord(record: TanzakuRecord) {
 
 router.post("/", async (c) => {
   const body = await c.req.json().catch(() => ({}));
-  const dream = typeof body.dream === "string" ? body.dream.trim().slice(0, 40) : "";
-  const deadline =
-    typeof body.deadline === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.deadline)
-      ? body.deadline
-      : null;
-
+  const dream = typeof body?.dream === "string" ? body.dream.trim().slice(0, 40) : "";
   if (!dream) return c.json({ error: "夢を入力してください" }, 400);
-
-  const generatedSteps = await generateDreamRoadmap(dream, deadline ?? undefined);
-  const now = new Date().toISOString();
+  const startedAt = new Date();
+  const today = todayInJapan(startedAt);
+  let deadline: string | null;
+  try {
+    deadline = validateDeadline(body?.deadline, today);
+  } catch (error) {
+    return c.json({ error: (error as Error).message }, 400);
+  }
+  const generatedSteps = await generateDreamRoadmap(dream, deadline ?? undefined, today);
+  const now = startedAt.toISOString();
   const record: TanzakuRecord = {
     id: randomUUID(),
     dream,
