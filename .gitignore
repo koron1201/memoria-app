@@ -27,6 +27,7 @@ ehthumbs.db
 CLAUDE.md
 AGENTS.md
 .cursor/
+/.codex/
 
 # Debug
 npm-debug.log*
@@ -36,3 +37,6 @@ npm-debug.log*
 
 # TypeScript
 *.tsbuildinfo
+
+# Project-local notes
+/Memoria/

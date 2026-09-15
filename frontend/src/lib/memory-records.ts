@@ -2,7 +2,7 @@ import type { AnimalId } from "@/lib/mood";
 import { DEFAULT_ANIMAL_ID } from "@/lib/mood";
 import type { SampleMemory } from "@/lib/sample-memories";
 
-export type MemoryAnimalId = "cat" | "bear" | "fox" | "mouse" | "dog" | "penguin";
+export type MemoryAnimalId = "lion" | "rabbit" | "cat" | "bear" | "fox";
 
 export interface MemoryRecord {
   id: number;
@@ -23,21 +23,20 @@ export interface MemoryAlbumItem {
 }
 
 export const MEMORY_ANIMAL_MAP: Record<string, AnimalId> = {
-  cat: "free",        // 自由
-  bear: "calm",       // 穏やか
-  fox: "curious",     // 好奇心
-  mouse: "lonely",    // 繊細・静か
-  dog: "friendly",    // 親しみ・信頼
-  penguin: "social",  // 社交的
+  lion: "friendly",
+  rabbit: "calm",
+  cat: "free",
+  bear: "calm",
+  fox: "curious",
 };
 
-const MEMORY_EMOTION_LABEL: Record<string, string> = {
-  free: "自分らしく",
-  calm: "ゆったり",
-  curious: "あたらしい発見",
-  lonely: "そっと寄り添う",
-  friendly: "だれかと一緒に",
-  social: "みんなを笑顔に",
+const MEMORY_EMOTION_LABEL: Record<AnimalId, string> = {
+  free: "喜び",
+  calm: "落ち着き",
+  curious: "探究",
+  lonely: "そっと",
+  friendly: "つながり",
+  social: "ふれあい",
 };
 
 export function formatMemoryListDate(createdAt: string) {
@@ -64,12 +63,9 @@ export function toHomeMemory(row: MemoryRecord): SampleMemory {
 }
 
 export function toAlbumMemory(row: MemoryRecord): MemoryAlbumItem {
-  // 💡 定義されているすべてのMemoryAnimalIdを含めるように修正
-  const validAnimals: string[] = ["cat", "bear", "fox", "mouse", "dog", "penguin"];
-
-  const animalId = validAnimals.includes(row.animal_id)
+  const animalId = ["lion", "rabbit", "cat", "bear", "fox"].includes(row.animal_id)
     ? (row.animal_id as MemoryAnimalId)
-    : "cat"; // 万が一不正な値が来たらcatにする防衛ライン
+    : "cat";
 
   return {
     id: row.id,
@@ -80,3 +76,4 @@ export function toAlbumMemory(row: MemoryRecord): MemoryAlbumItem {
     createdAt: row.created_at,
   };
 }
+>>>>>>> b7f7c69137cfd9db8a3b2cc97f4d3d18a94e1e58

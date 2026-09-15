@@ -12,7 +12,6 @@ import { pageTransition, transitions } from "@/lib/motion";
 import { RouteAtmosphere } from "@/components/route-atmosphere";
 import { APP_LS } from "@/lib/app-local-storage";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/lib/supabase";
 
 const ANALYSIS_STEPS = ["写真を読む", "気持ちを拾う", "言葉を整える", "記録にする"] as const;
 
@@ -101,28 +100,13 @@ export default function UploadPage() {
     formData.append("text", text);
 
     try {
-      // ★ JWTトークンを取得
-      const { data: { session } } = await supabase.auth.getSession()
-      console.log('session:', session)        // ← 追加
-      console.log('token:', session?.access_token) // ← 追加
-
-      if (!session) {
-        alert("ログインが必要です");
-        router.push("/onboarding");
-        return;
-      }
-
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/analyze`, { // ★ 環境変数を使用
+      const res = await fetch("http://localhost:3001/api/analyze", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${session.access_token}`, // ★ JWTを付与
-        },
         body: formData,
       });
 
       if (!res.ok) throw new Error("解析に失敗しました");
 
-      // 以下は変更なし
       const result = await res.json();
       setProgressPct(100);
       setStepIndex(ANALYSIS_STEPS.length - 1);
@@ -408,3 +392,4 @@ function AnalyzeOverlay({
     </AnimatePresence>
   );
 }
+>>>>>>> b7f7c69137cfd9db8a3b2cc97f4d3d18a94e1e58

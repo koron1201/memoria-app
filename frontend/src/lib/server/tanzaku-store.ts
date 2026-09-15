@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 
 import type { TanzakuStep, TanzakuWish } from "@/lib/api/tanzaku";
-import { makeStepDueDatesFromToday } from "@/lib/tanzaku-dates";
+import { makeStepDueDatesFromToday, todayInJapan, validateDeadline } from "@/lib/tanzaku-dates";
 
 type TanzakuRecord = {
   id: string;
@@ -50,11 +50,11 @@ function toRecord(item: TanzakuWish): TanzakuRecord {
   };
 }
 
-function fallbackDate(deadline: string | null, index: number, total: number) {
-  return makeStepDueDatesFromToday(total, deadline)[index] ?? "";
+function fallbackDate(deadline: string | null, index: number, total: number, today: string) {
+  return makeStepDueDatesFromToday(total, deadline, today)[index] ?? "";
 }
 
-function fallbackSteps(dream: string, deadline: string | null): TanzakuStep[] {
+function fallbackSteps(dream: string, deadline: string | null, today: string): TanzakuStep[] {
   const titles = [
     "叶えたい理由を一文で残す",
     "今できていることを書き出す",
@@ -67,33 +67,35 @@ function fallbackSteps(dream: string, deadline: string | null): TanzakuStep[] {
 
   return titles.map((title, index) => ({
     title,
+    generationSource: "fallback",
     detail: `「${dream}」に近づくため、今日の行動に落とし込む。`,
-    dueDate: fallbackDate(deadline, index, titles.length),
+    dueDate: fallbackDate(deadline, index, titles.length, today),
     done: false,
     completedAt: null,
   }));
 }
 
-function normalizeSteps(raw: unknown, dream: string, deadline: string | null): TanzakuStep[] {
+function normalizeSteps(raw: unknown, dream: string, deadline: string | null, today: string): TanzakuStep[] {
   const steps = (raw as { steps?: Partial<TanzakuStep>[] })?.steps;
-  if (!Array.isArray(steps)) return fallbackSteps(dream, deadline);
+  if (!Array.isArray(steps) || steps.some((step) => !step || typeof step !== "object")) return fallbackSteps(dream, deadline, today);
   const plannedSteps = steps.slice(0, 10);
-  const dueDates = makeStepDueDatesFromToday(plannedSteps.length, deadline);
+  const dueDates = makeStepDueDatesFromToday(plannedSteps.length, deadline, today);
   const normalized = plannedSteps.map((step, index) => ({
+    generationSource: "ai" as const,
     title: typeof step.title === "string" && step.title.trim() ? step.title.trim() : `ステップ${index + 1}`,
     detail: typeof step.detail === "string" && step.detail.trim() ? step.detail.trim() : "具体的な行動を一つ決めて進める。",
-    dueDate: dueDates[index] ?? fallbackDate(deadline, index, plannedSteps.length),
+    dueDate: dueDates[index] ?? fallbackDate(deadline, index, plannedSteps.length, today),
     done: false,
     completedAt: null,
   }));
-  return normalized.length >= 5 ? normalized : fallbackSteps(dream, deadline);
+  return normalized.length >= 5 ? normalized : fallbackSteps(dream, deadline, today);
 }
 
-async function generateSteps(dream: string, deadline: string | null): Promise<TanzakuStep[]> {
+async function generateSteps(dream: string, deadline: string | null, today: string): Promise<TanzakuStep[]> {
   const key = process.env.GEMINI_API_KEY;
-  if (!key) return fallbackSteps(dream, deadline);
+  if (!key) return fallbackSteps(dream, deadline, today);
 
-  const prompt = `夢「${dream}」を達成するためのロードマップを5個以上10個以下で作成してください。最終期限は「${deadline ?? "未指定"}」。各ステップはtitle/detail/dueDate(YYYY-MM-DD)を持つJSONだけで返してください。`;
+  const prompt = `作成基準日は日本時間の${today}です。夢「${dream}」を達成するためのロードマップを5個以上10個以下で作成してください。最終期限は「${deadline ?? "未指定"}」。各ステップはtitle/detail/dueDate(YYYY-MM-DD)を持つJSONだけで返してください。`;
 
   try {
     const res = await fetch(
@@ -107,25 +109,27 @@ async function generateSteps(dream: string, deadline: string | null): Promise<Ta
         }),
       },
     );
-    if (!res.ok) return fallbackSteps(dream, deadline);
+    if (!res.ok) return fallbackSteps(dream, deadline, today);
     const data = await res.json();
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    return normalizeSteps(JSON.parse(text), dream, deadline);
+    return normalizeSteps(JSON.parse(text), dream, deadline, today);
   } catch {
-    return fallbackSteps(dream, deadline);
+    return fallbackSteps(dream, deadline, today);
   }
 }
 
-export async function createTanzaku(input: { dream: string; deadline: string | null }) {
+export async function createTanzaku(input: { dream: string; deadline?: unknown }) {
   const dream = input.dream.trim().slice(0, 40);
   if (!dream) throw new Error("夢を入力してください");
-  const deadline = input.deadline && /^\d{4}-\d{2}-\d{2}$/.test(input.deadline) ? input.deadline : null;
-  const now = new Date().toISOString();
+  const startedAt = new Date();
+  const today = todayInJapan(startedAt);
+  const deadline = validateDeadline(input.deadline, today);
+  const now = startedAt.toISOString();
   const record: TanzakuRecord = {
     id: randomUUID(),
     dream,
     deadline,
-    roadmap_steps: await generateSteps(dream, deadline),
+    roadmap_steps: await generateSteps(dream, deadline, today),
     status: "active",
     reflection: null,
     created_at: now,

@@ -1,3 +1,4 @@
+import { makeStepDueDatesFromToday, todayInJapan, validateDeadline } from "../lib/tanzaku-dates";
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 
 // 環境変数からAPIキーを取得
@@ -125,11 +126,14 @@ export type GeneratedRoadmapStep = {
   title: string;
   detail: string;
   dueDate: string;
+  generationSource?: "ai" | "fallback";
 };
 
-function clampRoadmapSteps(raw: unknown): GeneratedRoadmapStep[] {
+function clampRoadmapSteps(raw: unknown, deadline: string | null, today: string): GeneratedRoadmapStep[] {
   const parsed = raw as { steps?: Partial<GeneratedRoadmapStep>[] };
-  const steps = Array.isArray(parsed.steps) ? parsed.steps : [];
+  const steps = Array.isArray(parsed?.steps) ? parsed.steps : [];
+  if (steps.some((step) => !step || typeof step !== "object")) return [];
+  const dueDates = makeStepDueDatesFromToday(Math.min(steps.length, 10), deadline, today);
   return steps
     .slice(0, 10)
     .map((step, index) => ({
@@ -141,19 +145,14 @@ function clampRoadmapSteps(raw: unknown): GeneratedRoadmapStep[] {
         typeof step.detail === "string" && step.detail.trim()
           ? step.detail.trim()
           : "達成に向けた小さな行動を決めて実行する。",
-      dueDate:
-        typeof step.dueDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(step.dueDate)
-          ? step.dueDate
-          : "",
+      dueDate: dueDates[index],
+      generationSource: "ai" as const,
     }))
     .filter((step) => step.title)
     .slice(0, 10);
 }
 
-function fallbackSteps(dream: string, deadline?: string): GeneratedRoadmapStep[] {
-  const baseDate = deadline && /^\d{4}-\d{2}-\d{2}$/.test(deadline)
-    ? new Date(`${deadline}T12:00:00`)
-    : new Date(Date.now() + 1000 * 60 * 60 * 24 * 180);
+function fallbackSteps(dream: string, deadline: string | null, today: string): GeneratedRoadmapStep[] {
   const titles = [
     "叶えたい理由を言葉にする",
     "今の状態を整理する",
@@ -164,18 +163,20 @@ function fallbackSteps(dream: string, deadline?: string): GeneratedRoadmapStep[]
     "達成の形を残す",
   ];
 
+  const dueDates = makeStepDueDatesFromToday(titles.length, deadline, today);
   return titles.map((title, index) => {
-    const due = new Date(baseDate);
-    due.setDate(baseDate.getDate() - (titles.length - index - 1) * 14);
     return {
       title,
       detail: `「${dream}」に近づくため、無理なく続けられる形に具体化する。`,
-      dueDate: due.toISOString().slice(0, 10),
+      dueDate: dueDates[index],
+      generationSource: "fallback",
     };
   });
 }
 
-export async function generateDreamRoadmap(dream: string, deadline?: string) {
+export async function generateDreamRoadmap(dream: string, deadline?: string, today = todayInJapan()) {
+  const finalDeadline = validateDeadline(deadline, today);
+  if (!process.env.GEMINI_API_KEY) return fallbackSteps(dream, finalDeadline, today);
   const model = genAI.getGenerativeModel({
     model: "gemini-2.5-flash",
     generationConfig: {
@@ -190,6 +191,9 @@ export async function generateDreamRoadmap(dream: string, deadline?: string) {
     【夢】
     ${dream}
 
+    【作成基準日（日本時間）】
+    ${today}
+
     【最終期限】
     ${deadline || "未指定"}
 
@@ -203,10 +207,10 @@ export async function generateDreamRoadmap(dream: string, deadline?: string) {
 
   try {
     const result = await model.generateContent(prompt);
-    const steps = clampRoadmapSteps(JSON.parse(result.response.text()));
-    return steps.length >= 5 ? steps : fallbackSteps(dream, deadline);
+    const steps = clampRoadmapSteps(JSON.parse(result.response.text()), finalDeadline, today);
+    return steps.length >= 5 ? steps : fallbackSteps(dream, finalDeadline, today);
   } catch (error) {
     console.error("Gemini Roadmap Error:", error);
-    return fallbackSteps(dream, deadline);
+    return fallbackSteps(dream, finalDeadline, today);
   }
 }

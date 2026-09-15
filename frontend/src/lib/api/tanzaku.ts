@@ -4,6 +4,7 @@ export type TanzakuStep = {
   dueDate: string;
   done: boolean;
   completedAt: string | null;
+  generationSource?: "ai" | "fallback";
 };
 
 export type TanzakuWish = {

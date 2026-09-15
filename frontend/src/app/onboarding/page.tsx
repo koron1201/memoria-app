@@ -64,16 +64,8 @@ export default function OnboardingPage() {
     }
   };
 
-    // 【修正】キーは保存せず、ログイン画面へ誘導するだけにする
-    // 【修正】エラーをキャッチできるようにする
   const goToLogin = () => {
-    console.log("🚀 goToLogin が呼ばれました。遷移先: /login");
-    try {
-      router.push("/login");
-      console.log("✅ router.push が実行されました");
-    } catch (error) {
-      console.error("❌ ルーター遷移でエラーが発生しました:", error);
-    }
+    router.push("/login");
   };
 
   return (

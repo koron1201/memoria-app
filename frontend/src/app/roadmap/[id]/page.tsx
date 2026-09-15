@@ -13,7 +13,6 @@ import {
 import { pageTransition } from "@/lib/motion";
 import { RouteAtmosphere } from "@/components/route-atmosphere";
 import { tanzakuApi, type TanzakuStep, type TanzakuWish } from "@/lib/api/tanzaku";
-import { rebaseStepDueDatesFromToday } from "@/lib/tanzaku-dates";
 import { cn } from "@/lib/utils";
 
 type StarPoint = {
@@ -76,9 +75,6 @@ function RoadmapTopBar() {
       </button>
       <p className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-baseline gap-3 font-serif text-[1.55rem] font-semibold tracking-[0.18em] text-[#71824f] max-sm:text-[1.08rem]">
         MEMORIA
-        <span className="font-sans text-[1.32rem] font-semibold tracking-[0.06em] text-[#d48397] max-sm:text-[0.95rem]">
-          wishes
-        </span>
       </p>
       <span className="size-14 max-sm:size-12" aria-hidden />
     </header>
@@ -126,6 +122,11 @@ function WishCard({ wish }: { wish: TanzakuWish }) {
           <p className="mt-5 font-serif text-[1.24rem] tracking-[0.08em] text-mono-ink/68 max-sm:text-base">
             最終期限：{formatSlashDate(wish.deadline)}
           </p>
+          {wish.steps.some((step) => step.generationSource === "fallback") && (
+            <p className="mt-3 text-sm text-mono-ink/68" role="status">
+              AIのプランを生成できなかったため、基本の7ステップで作成しました。
+            </p>
+          )}
         </div>
         <div className="relative hidden min-h-[12rem] md:block">
           <DreamOrb />
@@ -533,12 +534,8 @@ export default function RoadmapPage({
       .get(id)
       .then((item) => {
         if (ignore) return;
-        const adjustedItem = {
-          ...item,
-          steps: rebaseStepDueDatesFromToday(item.steps, item.deadline),
-        };
-        setWish(adjustedItem);
-        setSelectedStep(currentStepIndex(adjustedItem.steps));
+        setWish(item);
+        setSelectedStep(currentStepIndex(item.steps));
       })
       .catch(() => {
         if (!ignore) setError("ロードマップを読み込めませんでした。");
