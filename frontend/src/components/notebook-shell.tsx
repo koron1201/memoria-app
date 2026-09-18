@@ -65,7 +65,7 @@ export function NotebookHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <header className="flex items-start justify-between gap-4">
+    <header className="flex items-start justify-between gap-4 pr-14 min-[760px]:pr-0">
       <div className="min-w-0">
         {eyebrow && (
           <p className="text-[11px] font-medium tracking-[0.14em] text-muted-foreground">
