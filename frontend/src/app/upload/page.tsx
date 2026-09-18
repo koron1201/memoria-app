@@ -22,9 +22,7 @@ export default function UploadPage() {
 
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [text, setText] = useState(
-    "お気に入りのカフェで、ゆっくり読書ができた。心が落ち着いた時間だった。",
-  );
+  const [text, setText] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [progressPct, setProgressPct] = useState(0);
@@ -191,7 +189,7 @@ export default function UploadPage() {
                 className="pointer-events-none absolute inset-x-0 top-[3.1rem] bottom-8 bg-[repeating-linear-gradient(180deg,transparent_0,transparent_1.7rem,rgba(58,56,52,0.075)_1.75rem)]"
               />
               <textarea
-                placeholder="今日はどんな出来事でしたか？"
+                placeholder="例：お気に入りのカフェで、ゆっくり読書ができた。心が落ち着いた時間だった。"
                 rows={5}
                 maxLength={200}
                 value={text}

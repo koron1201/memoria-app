@@ -13,6 +13,7 @@ type TanzakuRecord = {
   reflection: string | null;
   created_at: string;
   achieved_at: string | null;
+  user_id: string;
 };
 
 const memoryStore = new Map<string, TanzakuRecord>();
@@ -22,6 +23,20 @@ function getSupabaseAdmin() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return null;
   return createClient(url, key);
+}
+
+export class TanzakuAuthError extends Error {
+  constructor(message: string, readonly status: 401 | 500) { super(message); }
+}
+
+export async function getTanzakuUserId(authorization: string | null) {
+  const token = authorization?.startsWith("Bearer ") ? authorization.slice("Bearer ".length) : null;
+  if (!token) throw new TanzakuAuthError("ログインが必要です。", 401);
+  const supabase = getSupabaseAdmin();
+  if (!supabase) throw new TanzakuAuthError("短冊APIのサーバー設定がありません。", 500);
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data.user) throw new TanzakuAuthError("ログイン情報を確認できませんでした。", 401);
+  return data.user.id;
 }
 
 function toClient(record: TanzakuRecord): TanzakuWish {
@@ -37,7 +52,7 @@ function toClient(record: TanzakuRecord): TanzakuWish {
   };
 }
 
-function toRecord(item: TanzakuWish): TanzakuRecord {
+function toRecord(item: TanzakuWish, userId: string): TanzakuRecord {
   return {
     id: item.id,
     dream: item.dream,
@@ -47,6 +62,7 @@ function toRecord(item: TanzakuWish): TanzakuRecord {
     reflection: item.reflection,
     created_at: item.createdAt,
     achieved_at: item.achievedAt,
+    user_id: userId,
   };
 }
 
@@ -118,7 +134,7 @@ async function generateSteps(dream: string, deadline: string | null, today: stri
   }
 }
 
-export async function createTanzaku(input: { dream: string; deadline?: unknown }) {
+export async function createTanzaku(input: { dream: string; deadline?: unknown }, userId: string) {
   const dream = input.dream.trim().slice(0, 40);
   if (!dream) throw new Error("夢を入力してください");
   const startedAt = new Date();
@@ -134,6 +150,7 @@ export async function createTanzaku(input: { dream: string; deadline?: unknown }
     reflection: null,
     created_at: now,
     achieved_at: null,
+    user_id: userId,
   };
 
   const supabase = getSupabaseAdmin();
@@ -151,35 +168,41 @@ export async function createTanzaku(input: { dream: string; deadline?: unknown }
   return toClient(data as TanzakuRecord);
 }
 
-export async function listTanzaku(status?: string) {
+export async function listTanzaku(userId: string, status?: string) {
   const supabase = getSupabaseAdmin();
   if (!supabase) {
     return [...memoryStore.values()]
-      .filter((item) => (status === "active" || status === "achieved" ? item.status === status : true))
+      .filter((item) => item.user_id === userId && (status === "active" || status === "achieved" ? item.status === status : true))
       .map(toClient);
   }
 
-  let query = supabase.from("tanzaku_wishes").select("*").order("created_at", { ascending: false });
+  let query = supabase.from("tanzaku_wishes").select("*").eq("user_id", userId).order("created_at", { ascending: false });
   if (status === "active" || status === "achieved") query = query.eq("status", status);
   const { data, error } = await query;
   if (error) {
     console.error("Next Tanzaku list error:", error);
-    return [...memoryStore.values()].map(toClient);
+    return [...memoryStore.values()].filter((item) => item.user_id === userId).map(toClient);
   }
   return ((data ?? []) as TanzakuRecord[]).map(toClient);
 }
 
-export async function getTanzaku(id: string) {
+export async function getTanzaku(id: string, userId: string) {
   const supabase = getSupabaseAdmin();
-  if (!supabase) return memoryStore.has(id) ? toClient(memoryStore.get(id)!) : null;
+  if (!supabase) {
+    const record = memoryStore.get(id);
+    return record?.user_id === userId ? toClient(record) : null;
+  }
 
-  const { data, error } = await supabase.from("tanzaku_wishes").select("*").eq("id", id).single();
-  if (error) return memoryStore.has(id) ? toClient(memoryStore.get(id)!) : null;
+  const { data, error } = await supabase.from("tanzaku_wishes").select("*").eq("id", id).eq("user_id", userId).single();
+  if (error) {
+    const record = memoryStore.get(id);
+    return record?.user_id === userId ? toClient(record) : null;
+  }
   return toClient(data as TanzakuRecord);
 }
 
-export async function updateTanzaku(id: string, input: Partial<Pick<TanzakuWish, "steps" | "reflection">>) {
-  const current = await getTanzaku(id);
+export async function updateTanzaku(id: string, userId: string, input: Partial<Pick<TanzakuWish, "steps" | "reflection">>) {
+  const current = await getTanzaku(id, userId);
   if (!current) return null;
 
   const steps = Array.isArray(input.steps)
@@ -202,7 +225,7 @@ export async function updateTanzaku(id: string, input: Partial<Pick<TanzakuWish,
     achievedAt: allDone ? current.achievedAt ?? new Date().toISOString() : null,
   };
 
-  const record = toRecord(next);
+  const record = toRecord(next, userId);
   const supabase = getSupabaseAdmin();
   if (!supabase) {
     memoryStore.set(record.id, record);
@@ -217,6 +240,7 @@ export async function updateTanzaku(id: string, input: Partial<Pick<TanzakuWish,
       achieved_at: record.achieved_at,
     })
     .eq("id", id)
+    .eq("user_id", userId)
     .select()
     .single();
   if (error) {

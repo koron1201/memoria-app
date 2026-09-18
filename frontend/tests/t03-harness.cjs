@@ -19,19 +19,20 @@ function harness(route, { date = '2026-09-14T03:00:00Z', mode = 'ai', count = 7,
     if (mode === 'json') return '{';
     return JSON.stringify(raw !== undefined ? raw : { steps: Array.from({length: count}, (_, i) => ({title: `Step ${i}`, detail: 'Action', dueDate: ['2020-01-01','2026-02-30','','2099-01-01','2026-09-20','2026-09-15'][i % 6]})) });
   };
-  const db = { from() {
-    let operation = 'read', value, key, status;
+  const db = { auth: { getUser: async (token) => ['test-token', 'user-a', 'user-b'].includes(token) ? { data: { user: { id: token === 'user-b' ? 'user-b' : 'user-a' } }, error: null } : { data: { user: null }, error: { message: 'unauthorized' } } }, from() {
+    let operation = 'read', value, key, status, userId;
     const query = {
       insert(record) { operation = 'insert'; value = record; return query; },
       update(record) { operation = 'update'; value = record; return query; },
       select() { return query; }, order() { return query; },
-      eq(column, v) { if (column === 'id') key = v; if(column === 'status') status = v; return query; },
+      eq(column, v) { if (column === 'id') key = v; if(column === 'status') status = v; if(column === 'user_id') userId = v; return query; },
       async single() {
         if(operation === 'insert') { key = value.id; records.set(key, structuredClone(value)); }
-        if(operation === 'update') records.set(key, {...records.get(key), ...structuredClone(value)});
-        return {data: structuredClone(records.get(key)), error: records.has(key) ? null : {message:'missing'}};
+        if(operation === 'update' && records.get(key)?.user_id === userId) records.set(key, {...records.get(key), ...structuredClone(value)});
+        const record = records.get(key);
+        return {data: record?.user_id === userId ? structuredClone(record) : undefined, error: record?.user_id === userId ? null : {message:'missing'}};
       },
-      then(resolve, reject) { return Promise.resolve({ data: [...records.values()].filter(r => !status || r.status === status), error: null }).then(resolve, reject); }
+      then(resolve, reject) { return Promise.resolve({ data: [...records.values()].filter(r => r.user_id === userId && (!status || r.status === status)), error: null }).then(resolve, reject); }
     }; return query;
   }};
   const cache = new Map();
@@ -41,7 +42,11 @@ function harness(route, { date = '2026-09-14T03:00:00Z', mode = 'ai', count = 7,
     const code = ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: {module:ts.ModuleKind.CommonJS, target:ts.ScriptTarget.ES2022} }).outputText;
     const customRequire = (name) => {
       if(name === '@supabase/supabase-js') return {createClient:()=>db};
-      if(name === '../lib/supabase') return {supabase:db};
+      if(name === '../lib/supabase') return {supabase:db, getAuthUser: async (header) => {
+        const token = header?.slice('Bearer '.length);
+        if(!['test-token', 'user-a', 'user-b'].includes(token)) throw new Error('Unauthorized');
+        return {id: token === 'user-b' ? 'user-b' : 'user-a'};
+      }};
       if(name === '@google/generative-ai') return {SchemaType:{OBJECT:'object',ARRAY:'array',STRING:'string'}, GoogleGenerativeAI:class { getGenerativeModel(){return {generateContent: async()=>({response:{text:responseText}})};} }};
       if(name.startsWith('@/')) return load(path.join(root,'src',name.slice(2)+'.ts'));
       if(name.startsWith('.')) return load(path.resolve(path.dirname(file), name+'.ts'));
@@ -56,9 +61,9 @@ function harness(route, { date = '2026-09-14T03:00:00Z', mode = 'ai', count = 7,
   }
   const api = route==='H' ? load(path.join(backend,'src/routes/tanzaku.ts')).default : load(path.join(root,'src/app/api/tanzaku/route.ts'));
   const detail = route==='N' ? load(path.join(root,'src/app/api/tanzaku/[id]/route.ts')) : null;
-  async function request(method, body, id) {
+  async function request(method, body, id, token = 'test-token') {
     const url='http://test/api/tanzaku'+(id?'/'+id:'');
-    const options={method,...(body===undefined?{}:{headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})};
+    const options={method,headers:{Authorization:`Bearer ${token}`,...(body===undefined?{}:{'Content-Type':'application/json'})},...(body===undefined?{}:{body:JSON.stringify(body)})};
     let result;
     if(route==='H') result=await api.request('http://test/'+(id??''),options);
     else result=await (id?detail:api)[method](new Request(url,options),{params:Promise.resolve({id})});

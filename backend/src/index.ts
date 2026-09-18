@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { serve } from '@hono/node-server'//Node.js用
 import analyzeRouter from './routes/analyze';
+import authRouter from './routes/auth';
 import tanzakuRouter from './routes/tanzaku';
 
 const app = new Hono()
@@ -24,6 +25,8 @@ app.use('*', async (c, next) => {
 });
 
 app.route('/api/analyze', analyzeRouter);
+// Googleログイン後のAuthユーザーをpublic.profilesへ同期するAPI。
+app.route('/api/auth', authRouter);
 app.route('/api/tanzaku', tanzakuRouter);
 
 export default {

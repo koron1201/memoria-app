@@ -54,6 +54,14 @@ for(const route of ['H','N']) {
   const copy=structuredClone(record);const read=await h.request('GET',undefined,id);assert.equal(read.body.steps[0].dueDate,'2020-01-01');assert.deepEqual(h.records.get(id),copy);
  });
  test(`${route} list supports generated records`,async()=>{const h=harness(route);const created=await h.request('POST',{dream:'Test'});const listed=await h.request('GET');assert.equal(listed.status,200);assert.equal(listed.body.items[0].id,created.body.id);});
+ test(`${route} isolates wishes by authenticated user`, async()=>{
+  const h=harness(route);
+  const created=await h.request('POST',{dream:'Private'}, undefined, 'user-a');
+  assert.equal((await h.request('GET', undefined, undefined, 'user-b')).body.items.length, 0);
+  assert.equal((await h.request('GET', undefined, created.body.id, 'user-b')).status, 404);
+  assert.equal((await h.request('PATCH',{steps:[]},created.body.id,'user-b')).status, 404);
+  assert.equal((await h.request('GET', undefined, undefined, 'invalid')).status, 401);
+ });
  test(`${route} U09 AI crosses Japan midnight`,async()=>{
   const h=harness(route,{date:'2026-09-14T14:59:00Z',afterAI:'2026-09-14T15:01:00Z'});const r=await h.request('POST',{dream:'Test',deadline:'2026-09-14'});assert.equal(r.status,201);invariant(r.body,'2026-09-14','2026-09-14',7);assert.equal(r.body.createdAt,'2026-09-14T14:59:00.000Z');
  });

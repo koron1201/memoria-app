@@ -1,3 +1,5 @@
+import { supabase } from "@/lib/supabase";
+
 export type TanzakuStep = {
   title: string;
   detail: string;
@@ -27,10 +29,12 @@ function apiUrl(path: string) {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const { data: { session } } = await supabase.auth.getSession();
   const res = await fetch(apiUrl(path), {
     ...init,
     headers: {
       "Content-Type": "application/json",
+      ...(session ? { Authorization: `Bearer ${session.access_token}` } : {}),
       ...init?.headers,
     },
   });
