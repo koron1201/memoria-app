@@ -24,7 +24,12 @@ export default function WelcomePage() {
         });
     };
 
-    const handleGuest = () => {
+    const handleGuest = async () => {
+        const { error } = await supabase.auth.signInAnonymously();
+        if (error) {
+            alert("ゲストとして記録を始めるには、Supabaseで匿名ログインを有効にしてください。");
+            return;
+        }
         localStorage.setItem(ONBOARDED_KEY, "true");
         router.push("/");
     };

@@ -37,7 +37,7 @@ cd memoria-app
 ```bash
 cd frontend
 npm install
-cp .env.example .env.local  # 環境変数を設定
+cp .env.local .env.local.local  # 環境変数を設定
 npm run dev                  # http://localhost:3000
 ```
 
@@ -46,7 +46,7 @@ npm run dev                  # http://localhost:3000
 ```bash
 cd backend
 npm install
-cp .env.example .env.local
+cp .env.local .env.local.local
 npm run dev                  # http://localhost:3001
 ```
 

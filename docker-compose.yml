@@ -10,7 +10,7 @@ services:
       #- ./backend:/app
       #- /app/node_modules
     env_file:
-      - ./backend/.env.local
+      - ./backend/.env.local.local
 
   # フロントエンドの設定
   frontend:

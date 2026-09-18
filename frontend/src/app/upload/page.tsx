@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { pageTransition, transitions } from "@/lib/motion";
 import { RouteAtmosphere } from "@/components/route-atmosphere";
 import { APP_LS } from "@/lib/app-local-storage";
+import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
 const ANALYSIS_STEPS = ["写真を読む", "気持ちを拾う", "言葉を整える", "記録にする"] as const;
@@ -95,17 +96,33 @@ export default function UploadPage() {
 
     setIsAnalyzing(true);
 
-    const formData = new FormData();
-    formData.append("image", file);
-    formData.append("text", text);
-
     try {
+      let {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        const { data, error } = await supabase.auth.signInAnonymously();
+        if (error || !data.session) {
+          throw new Error("記録を保存するにはログインが必要です。Googleログインを行うか、Supabaseで匿名ログインを有効にしてください。");
+        }
+        session = data.session;
+      }
+
+      const formData = new FormData();
+      formData.append("image", file);
+      formData.append("text", text);
+
       const res = await fetch("http://localhost:3001/api/analyze", {
         method: "POST",
         body: formData,
+        headers: { Authorization: `Bearer ${session.access_token}` },
       });
 
-      if (!res.ok) throw new Error("解析に失敗しました");
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error ?? `解析に失敗しました（HTTP ${res.status}）`);
+      }
 
       const result = await res.json();
       setProgressPct(100);
@@ -122,7 +139,7 @@ export default function UploadPage() {
       }
     } catch (error) {
       console.error(error);
-      alert("AI解析中にエラーが発生しました。バックエンドが動いているか確認してください。");
+      alert(error instanceof Error ? error.message : "解析に失敗しました。バックエンドの設定を確認してください。");
     } finally {
       setIsAnalyzing(false);
     }
