@@ -240,12 +240,13 @@ export default function ProfilePage() {
   }
 
   async function handleGoogleLogin() {
-    // Google認証後、このプロフィール画面へ戻るようにリダイレクト先を指定する。
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo:
-          typeof window !== "undefined" ? `${window.location.origin}/profile` : "/",
+          typeof window !== "undefined"
+            ? `${window.location.origin}/auth/callback?next=/profile`
+            : "/auth/callback?next=/profile",
       },
     });
   }

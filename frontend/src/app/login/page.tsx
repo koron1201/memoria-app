@@ -18,8 +18,10 @@ export default function WelcomePage() {
         await supabase.auth.signInWithOAuth({
             provider: "google",
             options: {
-                // 【修正2】Next.jsのSSRエラーを防ぐための安全な書き方
-                redirectTo: typeof window !== "undefined" ? `${window.location.origin}/` : "/",
+                redirectTo:
+                    typeof window !== "undefined"
+                        ? `${window.location.origin}/auth/callback?next=/`
+                        : "/auth/callback?next=/",
             },
         });
     };

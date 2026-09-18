@@ -7,7 +7,6 @@
  */
 
 import { APP_LS, clearEntireClientAppState } from "@/lib/app-local-storage";
-// 🌟 修正点1: Supabaseクライアントをインポートする
 import { supabase } from "@/lib/supabase";
 
 export interface UserProfile {
@@ -25,6 +24,7 @@ export interface NotificationPrefs {
 
 const PROFILE_KEY = APP_LS.profile;
 const NOTIF_KEY = APP_LS.notifications;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 export const defaultProfile: UserProfile = {
   displayName: "ゲストユーザー",
@@ -81,15 +81,45 @@ function normalizeNotifications(
 const profileFallback = defaultProfile as UserProfile & Record<string, unknown>;
 const notifFallback = defaultNotifications as NotificationPrefs & Record<string, unknown>;
 
+// public.profilesは自動作成されないため、ログイン済みセッションをバックエンドへ渡して同期する。
+async function syncProfileToBackend() {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  // ゲスト利用やセッション期限切れの場合は、同期できるユーザーがいないので何もしない。
+  if (!session?.access_token) return;
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/auth/session`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!res.ok) {
+      const result = await res.json().catch(() => null);
+      console.error("プロフィール同期に失敗しました", result ?? res.statusText);
+    }
+  } catch (error) {
+    console.error("プロフィール同期に失敗しました", error);
+  }
+}
+
 export const userApi = {
   async getProfile(): Promise<UserProfile> {
-    // 🌟 修正点2: まずローカルのデータを読み込む
+    // 表示名やアバターの手動変更は端末ローカルに残しているため、まずローカル値を読む。
     const localData = safeRead<UserProfile & Record<string, unknown>>(PROFILE_KEY, profileFallback);
 
-    // 🌟 修正点3: Supabaseからログイン中のユーザー情報を取得する
+    // Supabase Authのログイン状態を確認し、Googleアカウント情報をプロフィール表示に使う。
     const { data: { user } } = await supabase.auth.getUser();
 
     if (user) {
+      // callback同期が失敗した場合に備え、プロフィール取得時にもpublic.profilesへ再同期する。
+      void syncProfileToBackend();
+
       // ログイン済みの場合：Googleの情報とローカル情報をうまくミックスする
       const isDefaultName = !localData.displayName || localData.displayName === defaultProfile.displayName;
 

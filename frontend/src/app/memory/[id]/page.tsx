@@ -8,8 +8,10 @@ import { supabase } from "@/lib/supabase";
 import { AppHeader } from "@/components/app-header";
 import { GlassCard } from "@/components/glass-card";
 import { pageTransition } from "@/lib/motion";
-
-export type MemoryAnimalId = "lion" | "rabbit" | "cat" | "bear" | "fox";
+import {
+  isMemoryAnimalId,
+  type MemoryAnimalId,
+} from "@/lib/memory-records";
 
 // 表示用の型定義
 interface Memory {
@@ -32,7 +34,7 @@ const MEMORY_ANIMALS = [
 ];
 
 function getLocalAnimal(id: string) {
-  return MEMORY_ANIMALS.find((a) => a.id === id) || MEMORY_ANIMALS[2];
+  return MEMORY_ANIMALS.find((a) => a.id === id) || MEMORY_ANIMALS[0];
 }
 
 export default function AnalysisResultPage() {
@@ -63,7 +65,7 @@ export default function AnalysisResultPage() {
             date: new Date(dbData.created_at).toLocaleDateString("ja-JP", {
               month: "long", day: "numeric",
             }),
-            animalId: dbData.animal_id as MemoryAnimalId,
+            animalId: isMemoryAnimalId(dbData.animal_id) ? dbData.animal_id : "cat",
             diaryText: dbData.diary_text || "",
             imageUrl: dbData.image_url,
             emotion: dbData.emotion || "おだやか",

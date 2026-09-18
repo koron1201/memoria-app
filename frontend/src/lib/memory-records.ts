@@ -2,16 +2,16 @@ import type { AnimalId } from "@/lib/mood";
 import { DEFAULT_ANIMAL_ID } from "@/lib/mood";
 import type { SampleMemory } from "@/lib/sample-memories";
 
-/**
- * Geminiが返し、データベースに保存する動物ID
- */
-export type MemoryAnimalId =
-  | "cat"
-  | "bear"
-  | "fox"
-  | "mouse"
-  | "dog"
-  | "penguin";
+export const MEMORY_ANIMAL_IDS = [
+  "cat",
+  "bear",
+  "fox",
+  "mouse",
+  "dog",
+  "penguin",
+] as const;
+
+export type MemoryAnimalId = (typeof MEMORY_ANIMAL_IDS)[number];
 
 export interface MemoryRecord {
   id: number;
@@ -31,9 +31,7 @@ export interface MemoryAlbumItem {
   createdAt: string;
 }
 
-/**
- * Gemini・DBの動物IDと、画面表示用のAnimalIdとの対応
- */
+>>>>>>> 42cd16164332dddfccdb7c5f525e4dc4fc8e6c0f
 export const MEMORY_ANIMAL_MAP: Record<MemoryAnimalId, AnimalId> = {
   cat: "free",
   bear: "calm",
@@ -43,14 +41,9 @@ export const MEMORY_ANIMAL_MAP: Record<MemoryAnimalId, AnimalId> = {
   penguin: "social",
 };
 
-const MEMORY_ANIMAL_IDS: MemoryAnimalId[] = [
-  "cat",
-  "bear",
-  "fox",
-  "mouse",
-  "dog",
-  "penguin",
-];
+export function isMemoryAnimalId(value: unknown): value is MemoryAnimalId {
+  return typeof value === "string" && MEMORY_ANIMAL_IDS.includes(value as MemoryAnimalId);
+}
 
 const MEMORY_EMOTION_LABEL: Record<AnimalId, string> = {
   free: "喜び",
@@ -61,32 +54,14 @@ const MEMORY_EMOTION_LABEL: Record<AnimalId, string> = {
   social: "ふれあい",
 };
 
-/**
- * 文字列が有効な動物IDか判定する
- */
-function isMemoryAnimalId(value: string): value is MemoryAnimalId {
-  return MEMORY_ANIMAL_IDS.includes(value as MemoryAnimalId);
+export function formatMemoryListDate(createdAt: string) {
+  const d = new Date(createdAt);
+  if (Number.isNaN(d.getTime())) return "";
+  const week = ["日", "月", "火", "水", "木", "金", "土"][d.getDay()];
+  return `${d.getMonth() + 1}/${d.getDate()}(${week})`;
 }
 
-/**
- * 日付を「月/日（曜日）」形式へ変換する
- */
-export function formatMemoryListDate(createdAt: string): string {
-  const date = new Date(createdAt);
-
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
-  const week = ["日", "月", "火", "水", "木", "金", "土"];
-  const dayOfWeek = week[date.getDay()];
-
-  return `${date.getMonth() + 1}/${date.getDate()}(${dayOfWeek})`;
-}
-
-/**
- * データベースのMemoryをホーム画面用に変換する
- */
+>>>>>>> 42cd16164332dddfccdb7c5f525e4dc4fc8e6c0f
 export function toHomeMemory(row: MemoryRecord): SampleMemory {
   const animalId = isMemoryAnimalId(row.animal_id)
     ? MEMORY_ANIMAL_MAP[row.animal_id]
@@ -99,23 +74,15 @@ export function toHomeMemory(row: MemoryRecord): SampleMemory {
     date: formatMemoryListDate(row.created_at),
     animalId,
     preview: diaryText,
-    listTitle:
-      diaryText.length > 18
-        ? `${diaryText.slice(0, 18)}...`
-        : diaryText,
+    listTitle: diaryText.length > 18 ? `${diaryText.slice(0, 18)}...` : diaryText,
     tags: [row.emotion, MEMORY_EMOTION_LABEL[animalId]],
     imageUrl: row.image_url,
     meta: "",
   };
 }
 
-/**
- * データベースのMemoryをアルバム画面用に変換する
- */
 export function toAlbumMemory(row: MemoryRecord): MemoryAlbumItem {
-  const animalId: MemoryAnimalId = isMemoryAnimalId(row.animal_id)
-    ? row.animal_id
-    : "cat";
+  const animalId = isMemoryAnimalId(row.animal_id) ? row.animal_id : "cat";
 
   return {
     id: row.id,

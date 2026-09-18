@@ -27,7 +27,8 @@ router.post('/', async (c) => {
   try {
     // 【★認証の追加】ヘッダーからトークンを検証し、Googleログイン中のユーザーを特定
     const authHeader = c.req.header('Authorization') || null;
-    console.log('AuthHeader:', authHeader) // ← 追加
+    console.log('AuthHeader exists:', !!authHeader)
+    console.log('X-Memoria-Client:', c.req.header('X-Memoria-Client') || null)
     const user = await getAuthUser(authHeader);
     console.log('User ID:', user.id) // ← 追加
 
