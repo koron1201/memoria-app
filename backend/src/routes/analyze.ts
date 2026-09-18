@@ -24,6 +24,19 @@ function toSafeStorageName(name: string) {
  */
 router.post('/', async (c) => {
   try {
+    const authorization = c.req.header("Authorization");
+    const accessToken = authorization?.startsWith("Bearer ")
+      ? authorization.slice("Bearer ".length)
+      : null;
+    if (!accessToken) {
+      return c.json({ error: "ログイン情報が見つかりません。もう一度ログインしてください。" }, 401);
+    }
+
+    const { data: authData, error: authError } = await supabase.auth.getUser(accessToken);
+    if (authError || !authData.user) {
+      return c.json({ error: "ログイン情報を確認できませんでした。もう一度ログインしてください。" }, 401);
+    }
+
     // フォームデータを受け取る
     const body = await c.req.parseBody();
     const imageFile = body['image'];
@@ -57,7 +70,7 @@ router.post('/', async (c) => {
 
     if (storageError) {
         console.error("Storage Error:", storageError);
-        throw new Error("画像のアップロードに失敗しました");
+        throw new Error(`画像のアップロードに失敗しました: ${storageError.message}`);
     }
 
     // 公開URLを取得 (ここで publicUrl を定義します)
@@ -69,6 +82,7 @@ router.post('/', async (c) => {
     const { data: dbData, error: dbError } = await supabase
       .from('memories')
       .insert({
+        user_id: authData.user.id,
         image_url: publicUrl,
         diary_text: result.diaryText, // Geminiが生成したエモい日記テキスト
         emotion: result.emotion, // Geminiが判定した感情
@@ -79,7 +93,7 @@ router.post('/', async (c) => {
 
     if (dbError) {
       console.error("Database Error:", dbError);
-      throw new Error("データの保存に失敗しました");
+      throw new Error(`データの保存に失敗しました: ${dbError.message}`);
     }
 
     //保存されたレコードのIDと解析結果をフロントに返す
@@ -92,7 +106,10 @@ router.post('/', async (c) => {
   } catch (error) {
     // 【修正】 error: any をやめて、安全なログ出力にする
     console.error("Analysis Route Error:", error);
-    return c.json({ error: "AI解析中にエラーが発生しました" }, 500);
+    if (error instanceof Error) {
+      return c.json({ error: error.message }, 500);
+    }
+    return c.json({ error: "解析に失敗しました。" }, 500);
   }
 });
 

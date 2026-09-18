@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Bell, BookOpen, ChevronRight, Grid2X2, Map, PenLine, Sparkles, Star } from "lucide-react";
 import { MoodAnimal } from "@/components/mood-animal";
+import { WeeklyReflectionCard } from "@/components/weekly-reflection-card";
 import {
   DottedDivider,
   NotebookHeader,
@@ -124,6 +125,10 @@ export default function Home() {
           />
 
           <FeaturedPage memory={featuredMemory} animal={featuredAnimal} loading={isLoadingMemories} />
+
+          <div className="mt-6">
+            <WeeklyReflectionCard />
+          </div>
 
           <div className="mt-8 grid items-start gap-8 xl:grid-cols-[1.05fr_0.95fr]">
             <div className="grid gap-6">
