@@ -32,16 +32,15 @@ import {
   WashiTape,
 } from "@/components/notebook-shell";
 import { Toggle } from "@/components/profile/toggle";
-import { DEFAULT_ROADMAP_HREF } from "@/lib/app-paths";
 import { fileToAvatarDataUrl } from "@/lib/avatar-image";
 import { useProfile } from "@/lib/hooks/use-profile";
 import { ANIMALS, getAnimal, type AnimalId } from "@/lib/mood";
-import { MEMORY_ANIMAL_MAP, type MemoryAnimalId } from "@/lib/memory-records";
+import { MEMORY_ANIMAL_MAP, type MemoryAnimalId, type MemoryRecord } from "@/lib/memory-records";
 import { transitions } from "@/lib/motion";
+import { tanzakuApi, type TanzakuWish } from "@/lib/api/tanzaku";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
-const EMOTION_SUMMARY_DAYS = 30;
 // Supabaseのmemoriesテーブルから取得する、感情集計に必要な列の型。
 type EmotionSummaryRow = {
   id: number;
@@ -157,6 +156,8 @@ export default function ProfilePage() {
   const [editing, setEditing] = useState(false);
   const [draftName, setDraftName] = useState("");
   const [emotionRows, setEmotionRows] = useState<EmotionSummaryRow[]>([]);
+  const [memories, setMemories] = useState<MemoryRecord[]>([]);
+  const [activeWish, setActiveWish] = useState<TanzakuWish | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(true);
 
   // emotionRowsが変化したときだけ再集計し、不要な計算を避ける。
@@ -165,47 +166,63 @@ export default function ProfilePage() {
     () => emotionSummary.reduce((sum, item) => sum + item.count, 0),
     [emotionSummary],
   );
-  const dominantEmotion = emotionSummary.find((item) => item.count > 0) ?? null;
-  // 最も多い感情に対応する動物を「今日の相棒」として表示する。
-  const partner = getAnimal(dominantEmotion?.animalId ?? "free");
-
+  const topEmotions = emotionSummary.filter((item) => item.count > 0).slice(0, 3);
   useEffect(() => {
     // 画面遷移後に非同期処理が完了してもstateを更新しないためのフラグ。
     let cancelled = false;
 
-    async function fetchEmotionSummary() {
-      const since = new Date();
-      since.setDate(since.getDate() - EMOTION_SUMMARY_DAYS);
-
+    async function fetchSummary() {
       try {
-        // 直近30日分の日記だけを、新しい順でSupabaseから取得する。
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) throw userError ?? new Error("ログイン情報を確認できませんでした。");
         const { data, error } = await supabase
           .from("memories")
-          .select("id, animal_id, emotion, created_at")
-          .gte("created_at", since.toISOString())
+          .select("id, image_url, diary_text, emotion, animal_id, created_at")
+          .eq("user_id", user.id)
           .order("created_at", { ascending: false });
-
         if (cancelled) return;
-        // 集計取得に失敗してもページ全体は止めず、0件として表示する。
         if (error || !data) {
           setEmotionRows([]);
+          setMemories([]);
         } else {
           setEmotionRows(data as EmotionSummaryRow[]);
+          setMemories(data as MemoryRecord[]);
+        }
+        try {
+          const wishes = await tanzakuApi.list("active");
+          if (!cancelled) setActiveWish(wishes.items[0] ?? null);
+        } catch {
+          // 短冊の取得失敗は、本人の思い出集計を空にしない。
         }
       } catch {
-        if (!cancelled) setEmotionRows([]);
+        if (!cancelled) {
+          setEmotionRows([]);
+          setMemories([]);
+        }
       } finally {
         if (!cancelled) setLoadingSummary(false);
       }
     }
 
-    fetchEmotionSummary();
+    void fetchSummary();
 
     return () => {
       // コンポーネントが破棄された後のstate更新を防ぐ。
       cancelled = true;
     };
   }, []);
+
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tokyo" }).format(new Date());
+  const todayMemory = memories.find(
+    (memory) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tokyo" }).format(new Date(memory.created_at)) === today,
+  );
+  const partner = todayMemory && isMemoryAnimalId(todayMemory.animal_id)
+    ? getAnimal(MEMORY_ANIMAL_MAP[todayMemory.animal_id])
+    : null;
+  const photoCount = memories.filter((memory) => Boolean(memory.image_url)).length;
+  const companionCount = new Set(memories.filter((memory) => isMemoryAnimalId(memory.animal_id)).map((memory) => MEMORY_ANIMAL_MAP[memory.animal_id as MemoryAnimalId])).size;
+  const activeWishProgress = activeWish?.steps.length ? Math.round((activeWish.steps.filter((step) => step.done).length / activeWish.steps.length) * 100) : 0;
+  const activeWishHref = activeWish ? `/roadmap/${activeWish.id}` : "/tanzaku";
 
   const containerVariants = {
     initial: {},
@@ -268,7 +285,11 @@ export default function ProfilePage() {
           variants={itemVariants}
           className="mt-6 grid gap-7 md:grid-cols-[12rem_1fr] md:items-center"
         >
-          <ProfilePhoto src={profile.avatarUrl} onFileSelect={onAvatarFile} />
+          <ProfilePhoto
+            src={profile.avatarUrl}
+            partnerLabel={partner ? `${partner.label}・${partner.emoji}` : "まだ記録がありません"}
+            onFileSelect={onAvatarFile}
+          />
 
           <div className="min-w-0">
             <div className="flex min-w-0 items-start gap-3">
@@ -295,11 +316,15 @@ export default function ProfilePage() {
                 since 2026・かきかえ自由
               </span>
             </div>
-            <div className="mt-4 flex flex-wrap gap-3">
-              <Sticker tone="rose">喜び</Sticker>
-              <Sticker tone="sun">楽しい</Sticker>
-              <Sticker tone="sage">充実感</Sticker>
-            </div>
+            {topEmotions.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-3">
+                {topEmotions.map(({ label }, index) => (
+                  <Sticker key={label} tone={index === 0 ? "rose" : index === 1 ? "sun" : "sage"}>
+                    {label}
+                  </Sticker>
+                ))}
+              </div>
+            )}
           </div>
         </motion.div>
 
@@ -343,31 +368,35 @@ export default function ProfilePage() {
           <NotebookSectionTitle title="今日の相棒" icon={Sparkles} />
           <div className="grid gap-5 rounded-[1rem] border border-mono-linen/35 bg-white/45 p-5 shadow-soft ring-1 ring-white/45 md:grid-cols-[1fr_14rem] md:items-center">
             <div>
-              <h2 className="font-serif text-3xl font-semibold text-mono-ink">
-                {partner.label}
-              </h2>
+              {partner && <h2 className="font-serif text-3xl font-semibold text-mono-ink">{partner.label}</h2>}
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                 {loadingSummary
                   ? "思い出から相棒を探しています"
-                  : dominantEmotion
+                  : partner
                     ? partner.tagline
-                    : "日記を書くと、今のあなたに近い相棒が見えてきます"}
+                    : "今日はまだ日記がありません。記録すると、今日の相棒が現れます。"}
               </p>
               <Link
-                href={dominantEmotion?.latestMemoryId ? `/animal-card/${dominantEmotion.latestMemoryId}` : "/upload"}
+                href={todayMemory ? `/animal-card/${todayMemory.id}` : "/upload"}
                 className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-primary"
               >
-                {dominantEmotion ? "動物カードを見る" : "日記を書く"}
+                {todayMemory ? "動物カードを見る" : "日記を書く"}
                 <ChevronRight className="size-4" aria-hidden />
               </Link>
             </div>
             <div className="relative h-44">
-              <MoodAnimal
-                src={partner.glb}
-                accent={partner.accent}
-                className="absolute inset-0 h-44 w-full"
-                actionTick={0}
-              />
+              {partner ? (
+                <MoodAnimal
+                  src={partner.glb}
+                  accent={partner.accent}
+                  className="absolute inset-0 h-44 w-full"
+                  actionTick={0}
+                />
+              ) : (
+                <div className="grid h-full place-items-center text-4xl" aria-hidden>
+                  ✧
+                </div>
+              )}
             </div>
           </div>
         </motion.section>
@@ -380,7 +409,7 @@ export default function ProfilePage() {
             total={totalSummarizedMemories}
           />
           <p className="mt-3 text-[12px] text-muted-foreground">
-            集計期間は直近{EMOTION_SUMMARY_DAYS}日です。動物カードと見比べながら、最近の自分の傾向を振り返れます。
+            これまでの思い出を、動物カードと見比べながら振り返れます。
           </p>
         </motion.section>
 
@@ -389,18 +418,18 @@ export default function ProfilePage() {
           <div className="grid gap-3 sm:grid-cols-3">
             <StatCard
               icon={BookOpen}
-              label="集計した思い出"
-              value={loadingSummary ? "..." : String(totalSummarizedMemories)}
+              label="思い出数"
+              value={loadingSummary ? "..." : String(memories.length)}
               unit="件"
             />
-            <StatCard icon={Camera} label="集計期間" value={String(EMOTION_SUMMARY_DAYS)} unit="日" />
+            <StatCard icon={Camera} label="写真" value={loadingSummary ? "..." : String(photoCount)} unit="枚" />
             <StatCard
               icon={PawPrint}
               label="相棒発見"
               value={
                 loadingSummary
                   ? "..."
-                  : String(emotionSummary.filter((item) => item.count > 0).length)
+                  : String(companionCount)
               }
               unit="種類"
             />
@@ -413,7 +442,7 @@ export default function ProfilePage() {
         <motion.section variants={itemVariants} className="relative mt-7">
           <WashiTape className="-top-3 left-8" />
           <Link
-            href={DEFAULT_ROADMAP_HREF}
+            href={activeWishHref}
             className="block rounded-[0.35rem] bg-[#f3d878] px-6 py-5 shadow-soft ring-1 ring-[#d4b757]/35 transition hover:-translate-y-0.5 hover:bg-[#f5de87]"
           >
             <div className="flex items-center gap-2">
@@ -423,14 +452,25 @@ export default function ProfilePage() {
               </h2>
             </div>
             <DottedDivider className="my-4 opacity-70" />
-            <p className="text-lg font-semibold text-mono-ink">温泉旅行へ行く</p>
-            <div className="mt-4 flex items-center gap-4">
-              <span className="text-sm text-mono-ink/75">達成率</span>
-              <span className="h-3 w-40 overflow-hidden rounded-full bg-white/70 ring-1 ring-mono-ink/10">
-                <span className="block h-full w-[65%] rounded-full bg-primary" />
-              </span>
-              <span className="font-semibold tabular-nums text-mono-ink">65%</span>
-            </div>
+            {activeWish ? (
+              <>
+                <p className="text-lg font-semibold text-mono-ink">{activeWish.dream}</p>
+                <div className="mt-4 flex items-center gap-4">
+                  <span className="text-sm text-mono-ink/75">達成率</span>
+                  <span className="h-3 w-40 overflow-hidden rounded-full bg-white/70 ring-1 ring-mono-ink/10">
+                    <span
+                      className="block h-full rounded-full bg-primary"
+                      style={{ width: `${activeWishProgress}%` }}
+                    />
+                  </span>
+                  <span className="font-semibold tabular-nums text-mono-ink">{activeWishProgress}%</span>
+                </div>
+              </>
+            ) : (
+              <p className="text-lg font-semibold text-mono-ink">
+                {loadingSummary ? "夢を読み込んでいます…" : "次の夢を短冊に書いてみよう"}
+              </p>
+            )}
           </Link>
         </motion.section>
 
@@ -518,9 +558,11 @@ export default function ProfilePage() {
 
 function ProfilePhoto({
   src,
+  partnerLabel,
   onFileSelect,
 }: {
   src: string | null;
+  partnerLabel: string;
   onFileSelect: (file: File) => void;
 }) {
   const inputId = useId();
@@ -562,7 +604,7 @@ function ProfilePhoto({
           )}
         </span>
         <span className="mt-3 block truncate text-center text-sm text-mono-ink/75">
-          自由っぽい・ネコ
+          {partnerLabel}
         </span>
       </label>
     </div>
