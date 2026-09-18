@@ -27,4 +27,3 @@ export const weeklyReflectionApi = {
     );
   },
 };
-import { supabase } from "@/lib/supabase";
