@@ -20,6 +20,7 @@ import {
   type AnimalId,
 } from "@/lib/mood";
 import { toHomeMemory, type MemoryRecord } from "@/lib/memory-records";
+import { tanzakuApi, type TanzakuWish } from "@/lib/api/tanzaku";
 import type { SampleMemory } from "@/lib/sample-memories";
 import { pageTransition } from "@/lib/motion";
 import { supabase } from "@/lib/supabase";
@@ -320,47 +321,119 @@ function MemoryListCard({ memory, latest }: { memory: Memory; latest: boolean })
 }
 
 function DreamRoadmapCard() {
+  const [wishes, setWishes] = useState<TanzakuWish[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    tanzakuApi
+      .list("active")
+      .then(({ items }) => {
+        if (!cancelled) setWishes(items.slice(0, 3));
+      })
+      .catch(() => {
+        if (!cancelled) setWishes([]);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <section>
-      <NotebookSectionTitle number="03" label="ROADMAP" title="夢のロードマップ" icon={Map} />
-      <Link
-        href="/roadmap"
-        className="group block rounded-[1rem] bg-[#fff3c7]/82 p-5 shadow-soft ring-1 ring-[#d8ba72]/24 transition hover:-translate-y-0.5 hover:bg-[#fff6d8]"
-      >
-        <div className="flex items-start gap-3 pr-10">
-          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-white/58 text-[#d4a43d] ring-1 ring-[#d8ba72]/18">
-            <Star className="size-3.5" aria-hidden />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold text-muted-foreground">
-              次の夢
-            </p>
-            <p className="mt-1 text-base font-semibold leading-relaxed text-mono-ink">
-              温泉旅行へ行く
-            </p>
-          </div>
-        </div>
-        <div className="relative mt-4">
-          <div className="flex items-center justify-between text-[11px] font-semibold text-mono-ink/70">
-            <span>達成率</span>
-            <span className="tabular-nums">65%</span>
-          </div>
-          <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/78 ring-1 ring-mono-ink/8">
-            <div className="h-full w-[65%] rounded-full bg-mono-sage" />
-          </div>
-          <span
-            aria-hidden
-            className="absolute -right-1 -top-7 text-4xl leading-none text-mono-sage/55"
-          >
-            ♨
-          </span>
-        </div>
-        <p className="mt-3 inline-flex items-center gap-1 text-[11px] font-semibold text-primary">
-          ロードマップを見る
+      <div className="flex items-start gap-3">
+        <NotebookSectionTitle
+          number="03"
+          label="ROADMAP"
+          title="夢のロードマップ"
+          icon={Map}
+          className="mb-3 flex-1"
+        />
+        <Link
+          href="/tanzaku/past"
+          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white/70 px-3 py-1.5 text-[11px] font-semibold text-primary ring-1 ring-primary/12 transition hover:bg-white/90"
+        >
+          夢ページ
           <ChevronRight className="size-3" aria-hidden />
+        </Link>
+      </div>
+
+      {isLoading && (
+        <p className="rounded-[1rem] bg-[#fff3c7]/60 px-4 py-5 text-sm text-muted-foreground ring-1 ring-[#d8ba72]/20">
+          挑戦中の夢を読み込んでいます...
         </p>
-        <span className="sr-only">夢のロードマップを見る</span>
-      </Link>
+      )}
+
+      {!isLoading && wishes.length === 0 && (
+        <Link
+          href="/tanzaku"
+          className="group block rounded-[1rem] bg-[#fff3c7]/62 p-5 shadow-soft ring-1 ring-[#d8ba72]/20 transition hover:-translate-y-0.5 hover:bg-[#fff6d8]"
+        >
+          <p className="text-sm font-semibold text-mono-ink">挑戦中の夢はまだありません</p>
+          <p className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-primary">
+            新しい夢を書く
+            <ChevronRight className="size-3" aria-hidden />
+          </p>
+        </Link>
+      )}
+
+      {!isLoading && wishes.length > 0 && (
+        <div className="grid gap-3">
+          {wishes.map((wish) => {
+            const totalSteps = wish.steps.length;
+            const doneSteps = wish.steps.filter((step) => step.done).length;
+            const progress = totalSteps > 0 ? Math.round((doneSteps / totalSteps) * 100) : 0;
+
+            return (
+              <Link
+                key={wish.id}
+                href={`/roadmap/${wish.id}`}
+                className="group block rounded-[1rem] bg-[#fff3c7]/82 p-5 shadow-soft ring-1 ring-[#d8ba72]/24 transition hover:-translate-y-0.5 hover:bg-[#fff6d8]"
+              >
+                <div className="flex items-start gap-3">
+                  <span className="grid size-8 shrink-0 place-items-center rounded-full bg-white/58 text-[#d4a43d] ring-1 ring-[#d8ba72]/18">
+                    <Star className="size-3.5" aria-hidden />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-semibold text-muted-foreground">挑戦中の夢</p>
+                    <p className="mt-1 line-clamp-2 text-base font-semibold leading-relaxed text-mono-ink">
+                      {wish.dream}
+                    </p>
+                  </div>
+                  <ChevronRight className="mt-1 size-4 shrink-0 text-primary" aria-hidden />
+                </div>
+                <div className="mt-4">
+                  <div className="flex items-center justify-between text-[11px] font-semibold text-mono-ink/70">
+                    <span>達成率</span>
+                    <span className="tabular-nums">{progress}%</span>
+                  </div>
+                  <div
+                    className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/78 ring-1 ring-mono-ink/8"
+                    role="progressbar"
+                    aria-label={`${wish.dream}の達成率`}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={progress}
+                  >
+                    <div
+                      className="h-full rounded-full bg-mono-sage transition-[width]"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  <p className="mt-2 text-[11px] text-mono-ink/60">
+                    {doneSteps}/{totalSteps}ステップ完了
+                  </p>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }

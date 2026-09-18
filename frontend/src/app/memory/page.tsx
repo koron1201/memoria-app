@@ -20,7 +20,11 @@ import {
   WashiTape,
 } from "@/components/notebook-shell";
 import { pageTransition, transitions } from "@/lib/motion";
-import { toAlbumMemory, type MemoryAlbumItem, type MemoryAnimalId } from "@/lib/memory-records";
+import {
+  toAlbumMemory,
+  type MemoryAlbumItem,
+  type MemoryAnimalId,
+} from "@/lib/memory-records";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
@@ -32,15 +36,16 @@ export interface MemoryAnimal {
 }
 
 const MEMORY_ANIMALS: MemoryAnimal[] = [
-  { id: "lion", label: "情熱的なライオン", emoji: "🦁", accent: "#D4847A" },
-  { id: "rabbit", label: "思慮深いウサギ", emoji: "🐰", accent: "#C9A87C" },
   { id: "cat", label: "自由っぽいネコ", emoji: "🐱", accent: "#9BB5A5" },
   { id: "bear", label: "穏やかなクマ", emoji: "🐻", accent: "#6B8F7A" },
-  { id: "fox", label: "好奇心旺盛なキツネ", emoji: "🦊", accent: "#C4B59A" },
+  { id: "fox", label: "好奇心旺盛なキツネ", emoji: "🦊", accent: "#C9A87C" },
+  { id: "mouse", label: "繊細なネズミ", emoji: "🐭", accent: "#C4B59A" },
+  { id: "dog", label: "親しみ深いイヌ", emoji: "🐶", accent: "#D4847A" },
+  { id: "penguin", label: "愛らしいペンギン", emoji: "🐧", accent: "#7A9B8A" },
 ];
 
 export function getMemoryAnimal(id: MemoryAnimalId): MemoryAnimal {
-  return MEMORY_ANIMALS.find((a) => a.id === id) ?? MEMORY_ANIMALS[2];
+  return MEMORY_ANIMALS.find((a) => a.id === id) ?? MEMORY_ANIMALS[0];
 }
 
 function formatMemoryDate(createdAt: string) {

@@ -2,7 +2,16 @@ import type { AnimalId } from "@/lib/mood";
 import { DEFAULT_ANIMAL_ID } from "@/lib/mood";
 import type { SampleMemory } from "@/lib/sample-memories";
 
-export type MemoryAnimalId = "lion" | "rabbit" | "cat" | "bear" | "fox";
+export const MEMORY_ANIMAL_IDS = [
+  "cat",
+  "bear",
+  "fox",
+  "mouse",
+  "dog",
+  "penguin",
+] as const;
+
+export type MemoryAnimalId = (typeof MEMORY_ANIMAL_IDS)[number];
 
 export interface MemoryRecord {
   id: number;
@@ -22,13 +31,18 @@ export interface MemoryAlbumItem {
   createdAt: string;
 }
 
-export const MEMORY_ANIMAL_MAP: Record<string, AnimalId> = {
-  lion: "friendly",
-  rabbit: "calm",
+export const MEMORY_ANIMAL_MAP: Record<MemoryAnimalId, AnimalId> = {
   cat: "free",
   bear: "calm",
   fox: "curious",
+  mouse: "lonely",
+  dog: "friendly",
+  penguin: "social",
 };
+
+export function isMemoryAnimalId(value: unknown): value is MemoryAnimalId {
+  return typeof value === "string" && MEMORY_ANIMAL_IDS.includes(value as MemoryAnimalId);
+}
 
 const MEMORY_EMOTION_LABEL: Record<AnimalId, string> = {
   free: "喜び",
@@ -47,7 +61,9 @@ export function formatMemoryListDate(createdAt: string) {
 }
 
 export function toHomeMemory(row: MemoryRecord): SampleMemory {
-  const animalId = MEMORY_ANIMAL_MAP[row.animal_id] ?? DEFAULT_ANIMAL_ID;
+  const animalId = isMemoryAnimalId(row.animal_id)
+    ? MEMORY_ANIMAL_MAP[row.animal_id]
+    : DEFAULT_ANIMAL_ID;
   const diaryText = row.diary_text.trim();
 
   return {
@@ -63,9 +79,7 @@ export function toHomeMemory(row: MemoryRecord): SampleMemory {
 }
 
 export function toAlbumMemory(row: MemoryRecord): MemoryAlbumItem {
-  const animalId = ["lion", "rabbit", "cat", "bear", "fox"].includes(row.animal_id)
-    ? (row.animal_id as MemoryAnimalId)
-    : "cat";
+  const animalId = isMemoryAnimalId(row.animal_id) ? row.animal_id : "cat";
 
   return {
     id: row.id,

@@ -65,7 +65,7 @@ export function NotebookHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <header className="flex items-start justify-between gap-4">
+    <header className="flex items-start justify-between gap-4 pr-14 min-[760px]:pr-0">
       <div className="min-w-0">
         {eyebrow && (
           <p className="text-[11px] font-medium tracking-[0.14em] text-muted-foreground">
@@ -168,8 +168,13 @@ export function NotebookSideTabs({ active }: { active: keyof typeof notebookTabs
   return (
     <nav
       aria-label="ノートインデックス"
-      className="group absolute right-0 top-0 z-20 hidden h-12 w-5 overflow-hidden rounded-bl-[0.75rem] rounded-tl-[0.75rem] border border-r-0 border-mono-linen/40 bg-mono-cream/80 shadow-soft ring-1 ring-white/50 transition-[height,width] duration-200 ease-out hover:h-[18.6rem] hover:w-20 focus-within:h-[18.6rem] focus-within:w-20 min-[760px]:block"
+      className="group absolute right-0 top-0 z-20 h-12 w-11 overflow-hidden rounded-bl-[0.75rem] rounded-tl-[0.75rem] border border-r-0 border-mono-linen/40 bg-mono-cream/80 shadow-soft ring-1 ring-white/50 transition-[height,width] duration-200 ease-out hover:h-[18.6rem] hover:w-20 focus-within:h-[18.6rem] focus-within:w-20 min-[760px]:w-5"
     >
+      <button
+        type="button"
+        aria-label="ノートインデックスを開く"
+        className="absolute right-0 top-0 z-30 h-12 w-11 focus:w-0 min-[760px]:hidden"
+      />
       <span
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-primary/88 transition-opacity duration-150 group-hover:opacity-0 group-focus-within:opacity-0"
