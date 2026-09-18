@@ -35,6 +35,7 @@ export interface MemoryAnimal {
   accent: string;
 }
 
+
 const MEMORY_ANIMALS: MemoryAnimal[] = [
   { id: "cat", label: "自由っぽいネコ", emoji: "🐱", accent: "#9BB5A5" },
   { id: "bear", label: "穏やかなクマ", emoji: "🐻", accent: "#6B8F7A" },
