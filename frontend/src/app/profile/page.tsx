@@ -240,13 +240,15 @@ export default function ProfilePage() {
   }
 
   async function handleGoogleLogin() {
+    const appUrl =
+      process.env.NEXT_PUBLIC_APP_URL ??
+      (typeof window !== "undefined" ? window.location.origin : "");
+
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo:
-          typeof window !== "undefined"
-            ? `${window.location.origin}/auth/callback?next=/profile`
-            : "/auth/callback?next=/profile",
+        // ローカル開発中にVercel側へ戻らないよう、envで指定したアプリURLを優先する。
+        redirectTo: `${appUrl}/auth/callback?next=/profile`,
       },
     });
   }

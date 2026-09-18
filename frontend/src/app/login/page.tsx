@@ -14,14 +14,15 @@ export default function WelcomePage() {
     const handleGoogleLogin = async () => {
         // 【修正1】Googleの画面にリダイレクトされる「前」に保存する
         localStorage.setItem(ONBOARDED_KEY, "true");
+        const appUrl =
+            process.env.NEXT_PUBLIC_APP_URL ??
+            (typeof window !== "undefined" ? window.location.origin : "");
 
         await supabase.auth.signInWithOAuth({
             provider: "google",
             options: {
-                redirectTo:
-                    typeof window !== "undefined"
-                        ? `${window.location.origin}/auth/callback?next=/`
-                        : "/auth/callback?next=/",
+                // ローカル開発中にVercel側へ戻らないよう、envで指定したアプリURLを優先する。
+                redirectTo: `${appUrl}/auth/callback?next=/`,
             },
         });
     };

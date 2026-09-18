@@ -31,7 +31,6 @@ export interface MemoryAlbumItem {
   createdAt: string;
 }
 
->>>>>>> 42cd16164332dddfccdb7c5f525e4dc4fc8e6c0f
 export const MEMORY_ANIMAL_MAP: Record<MemoryAnimalId, AnimalId> = {
   cat: "free",
   bear: "calm",
@@ -41,8 +40,13 @@ export const MEMORY_ANIMAL_MAP: Record<MemoryAnimalId, AnimalId> = {
   penguin: "social",
 };
 
-export function isMemoryAnimalId(value: unknown): value is MemoryAnimalId {
-  return typeof value === "string" && MEMORY_ANIMAL_IDS.includes(value as MemoryAnimalId);
+export function isMemoryAnimalId(
+  value: unknown,
+): value is MemoryAnimalId {
+  return (
+    typeof value === "string" &&
+    MEMORY_ANIMAL_IDS.includes(value as MemoryAnimalId)
+  );
 }
 
 const MEMORY_EMOTION_LABEL: Record<AnimalId, string> = {
@@ -56,13 +60,27 @@ const MEMORY_EMOTION_LABEL: Record<AnimalId, string> = {
 
 export function formatMemoryListDate(createdAt: string) {
   const d = new Date(createdAt);
-  if (Number.isNaN(d.getTime())) return "";
-  const week = ["日", "月", "火", "水", "木", "金", "土"][d.getDay()];
+
+  if (Number.isNaN(d.getTime())) {
+    return "";
+  }
+
+  const week = [
+    "日",
+    "月",
+    "火",
+    "水",
+    "木",
+    "金",
+    "土",
+  ][d.getDay()];
+
   return `${d.getMonth() + 1}/${d.getDate()}(${week})`;
 }
 
->>>>>>> 42cd16164332dddfccdb7c5f525e4dc4fc8e6c0f
-export function toHomeMemory(row: MemoryRecord): SampleMemory {
+export function toHomeMemory(
+  row: MemoryRecord,
+): SampleMemory {
   const animalId = isMemoryAnimalId(row.animal_id)
     ? MEMORY_ANIMAL_MAP[row.animal_id]
     : DEFAULT_ANIMAL_ID;
@@ -74,15 +92,25 @@ export function toHomeMemory(row: MemoryRecord): SampleMemory {
     date: formatMemoryListDate(row.created_at),
     animalId,
     preview: diaryText,
-    listTitle: diaryText.length > 18 ? `${diaryText.slice(0, 18)}...` : diaryText,
-    tags: [row.emotion, MEMORY_EMOTION_LABEL[animalId]],
+    listTitle:
+      diaryText.length > 18
+        ? `${diaryText.slice(0, 18)}...`
+        : diaryText,
+    tags: [
+      row.emotion,
+      MEMORY_EMOTION_LABEL[animalId],
+    ],
     imageUrl: row.image_url,
     meta: "",
   };
 }
 
-export function toAlbumMemory(row: MemoryRecord): MemoryAlbumItem {
-  const animalId = isMemoryAnimalId(row.animal_id) ? row.animal_id : "cat";
+export function toAlbumMemory(
+  row: MemoryRecord,
+): MemoryAlbumItem {
+  const animalId = isMemoryAnimalId(row.animal_id)
+    ? row.animal_id
+    : "cat";
 
   return {
     id: row.id,
