@@ -7,11 +7,15 @@ import tanzakuRouter from './routes/tanzaku';
 
 const app = new Hono()
 
-// フロントからBearerトークン付きで叩くため、認証ヘッダーをCORSで明示的に許可する。
+const corsOrigins = (process.env.CORS_ORIGIN ?? "http://localhost:3000,http://127.0.0.1:3000")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 app.use('/*', cors({
-  origin: process.env.CORS_ORIGIN ?? 'http://localhost:3000',
-  allowHeaders: ['Authorization', 'Content-Type', 'X-Memoria-Client'],
-  allowMethods: ['GET', 'POST', 'OPTIONS'],
+  origin: (origin) => corsOrigins.includes(origin) ? origin : corsOrigins[0],
+  allowHeaders: ["Content-Type", "Authorization"],
+  allowMethods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
 }))
 
 app.get('/health', (c) => c.json({ status: 'ok' }))

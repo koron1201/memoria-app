@@ -14,20 +14,22 @@ export default function WelcomePage() {
     const handleGoogleLogin = async () => {
         // 【修正1】Googleの画面にリダイレクトされる「前」に保存する
         localStorage.setItem(ONBOARDED_KEY, "true");
-        const appUrl =
-            process.env.NEXT_PUBLIC_APP_URL ??
-            (typeof window !== "undefined" ? window.location.origin : "");
 
         await supabase.auth.signInWithOAuth({
             provider: "google",
             options: {
-                // ローカル開発中にVercel側へ戻らないよう、envで指定したアプリURLを優先する。
-                redirectTo: `${appUrl}/auth/callback?next=/`,
+                // 【修正2】Next.jsのSSRエラーを防ぐための安全な書き方
+                redirectTo: typeof window !== "undefined" ? `${window.location.origin}/` : "/",
             },
         });
     };
 
-    const handleGuest = () => {
+    const handleGuest = async () => {
+        const { error } = await supabase.auth.signInAnonymously();
+        if (error) {
+            alert("ゲストとして記録を始めるには、Supabaseで匿名ログインを有効にしてください。");
+            return;
+        }
         localStorage.setItem(ONBOARDED_KEY, "true");
         router.push("/");
     };
