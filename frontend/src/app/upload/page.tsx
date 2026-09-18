@@ -15,6 +15,8 @@ import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
 const ANALYSIS_STEPS = ["写真を読む", "気持ちを拾う", "言葉を整える", "記録にする"] as const;
+const ANALYSIS_PROGRESS_MAX = 95;
+const ANALYSIS_PROGRESS_TIME_CONSTANT_MS = 5_000;
 
 export default function UploadPage() {
   const router = useRouter();
@@ -37,19 +39,20 @@ export default function UploadPage() {
     setProgressPct(0);
     const startedAt = performance.now();
 
-    const stepTimer = setInterval(() => {
-      setStepIndex((i) => Math.min(i + 1, ANALYSIS_STEPS.length - 1));
-    }, 720);
-
-    const totalDuration = 720 * ANALYSIS_STEPS.length;
-    const tickInterval = 50;
     const progressTimer = setInterval(() => {
       const elapsed = performance.now() - startedAt;
-      setProgressPct(Math.min(100, (elapsed / totalDuration) * 100));
-    }, tickInterval);
+      const progress = Math.min(
+        ANALYSIS_PROGRESS_MAX,
+        ANALYSIS_PROGRESS_MAX * (1 - Math.exp(-elapsed / ANALYSIS_PROGRESS_TIME_CONSTANT_MS)),
+      );
+
+      setProgressPct(progress);
+      setStepIndex(
+        Math.min(Math.floor(progress / (100 / ANALYSIS_STEPS.length)), ANALYSIS_STEPS.length - 1),
+      );
+    }, 100);
 
     return () => {
-      clearInterval(stepTimer);
       clearInterval(progressTimer);
     };
   }, [isAnalyzing]);
@@ -125,7 +128,6 @@ export default function UploadPage() {
       const result = await res.json();
       setProgressPct(100);
       setStepIndex(ANALYSIS_STEPS.length - 1);
-      await new Promise((resolve) => setTimeout(resolve, 280));
 
       localStorage.setItem(APP_LS.lastAnalysis, JSON.stringify(result));
       if (previewUrl) localStorage.setItem(APP_LS.lastImage, previewUrl);
