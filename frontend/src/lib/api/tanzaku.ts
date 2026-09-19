@@ -20,12 +20,8 @@ export type TanzakuWish = {
   achievedAt: string | null;
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
-
 function apiUrl(path: string) {
-  const base = API_BASE.replace(/\/+$/, "");
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return `${base}${normalizedPath}`;
+  return path.startsWith("/") ? path : `/${path}`;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {

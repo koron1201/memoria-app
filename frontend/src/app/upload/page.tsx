@@ -124,7 +124,7 @@ export default function UploadPage() {
       formData.append("image", file);
       formData.append("text", text);
 
-      const res = await fetch("http://localhost:3001/api/analyze", {
+      const res = await fetch("/api/analyze", {
         method: "POST",
         body: formData,
         headers: { Authorization: `Bearer ${session.access_token}` },

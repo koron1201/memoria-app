@@ -24,7 +24,6 @@ export interface NotificationPrefs {
 
 const PROFILE_KEY = APP_LS.profile;
 const NOTIF_KEY = APP_LS.notifications;
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 export const defaultProfile: UserProfile = {
   displayName: "ゲストユーザー",
@@ -91,7 +90,7 @@ async function syncProfileToBackend() {
   if (!session?.access_token) return;
 
   try {
-    const res = await fetch(`${API_BASE_URL}/api/auth/session`, {
+    const res = await fetch("/api/auth/session", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${session.access_token}`,

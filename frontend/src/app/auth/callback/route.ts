@@ -34,11 +34,7 @@ export async function GET(req: NextRequest) {
 
       if (!error && data.session) {
         // AuthユーザーはSupabaseが管理するが、public.profilesはアプリ側テーブルなので明示的に同期する。
-        const apiUrl =
-          process.env.NEXT_PUBLIC_API_URL ??
-          (process.env.DOCKER_ENV === 'true' ? 'http://backend:3001' : 'http://localhost:3001');
-
-        const syncRes = await fetch(`${apiUrl}/api/auth/session`, {
+        const syncRes = await fetch(new URL('/api/auth/session', req.url), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
