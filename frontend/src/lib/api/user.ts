@@ -91,7 +91,7 @@ async function syncProfileToBackend() {
   if (!session?.access_token) return;
 
   try {
-    const res = await fetch(`${API_BASE_URL}/api/auth/session`, {
+    const res = await fetch("/api/auth/session", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${session.access_token}`,
