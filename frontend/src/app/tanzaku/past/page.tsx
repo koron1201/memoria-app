@@ -220,9 +220,7 @@ export default function PastTanzakuPage() {
               >
                 <ChevronLeft className="size-6" strokeWidth={1.5} aria-hidden />
               </Link>
-              <p className="text-center font-serif text-xl tracking-[0.17em] text-[#88945f] max-sm:text-base">
-                MEMORIA <span className="text-[#d38887]">wishes</span>
-              </p>
+              <p className="text-center font-serif text-xl tracking-[0.17em] text-[#88945f] max-sm:text-base">MEMORIA</p>
               <span aria-hidden />
             </header>
 
