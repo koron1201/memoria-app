@@ -11,7 +11,8 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "declaration": true
+    "declaration": true,
+    "types": ["node"]  // ← 追加
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]

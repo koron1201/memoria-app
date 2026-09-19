@@ -2,7 +2,16 @@ import type { AnimalId } from "@/lib/mood";
 import { DEFAULT_ANIMAL_ID } from "@/lib/mood";
 import type { SampleMemory } from "@/lib/sample-memories";
 
-export type MemoryAnimalId = "lion" | "rabbit" | "cat" | "bear" | "fox";
+export const MEMORY_ANIMAL_IDS = [
+  "cat",
+  "bear",
+  "fox",
+  "mouse",
+  "dog",
+  "penguin",
+] as const;
+
+export type MemoryAnimalId = (typeof MEMORY_ANIMAL_IDS)[number];
 
 export interface MemoryRecord {
   id: number;
@@ -22,13 +31,23 @@ export interface MemoryAlbumItem {
   createdAt: string;
 }
 
-export const MEMORY_ANIMAL_MAP: Record<string, AnimalId> = {
-  lion: "friendly",
-  rabbit: "calm",
+export const MEMORY_ANIMAL_MAP: Record<MemoryAnimalId, AnimalId> = {
   cat: "free",
   bear: "calm",
   fox: "curious",
+  mouse: "lonely",
+  dog: "friendly",
+  penguin: "social",
 };
+
+export function isMemoryAnimalId(
+  value: unknown,
+): value is MemoryAnimalId {
+  return (
+    typeof value === "string" &&
+    MEMORY_ANIMAL_IDS.includes(value as MemoryAnimalId)
+  );
+}
 
 const MEMORY_EMOTION_LABEL: Record<AnimalId, string> = {
   free: "喜び",
@@ -41,13 +60,31 @@ const MEMORY_EMOTION_LABEL: Record<AnimalId, string> = {
 
 export function formatMemoryListDate(createdAt: string) {
   const d = new Date(createdAt);
-  if (Number.isNaN(d.getTime())) return "";
-  const week = ["日", "月", "火", "水", "木", "金", "土"][d.getDay()];
+
+  if (Number.isNaN(d.getTime())) {
+    return "";
+  }
+
+  const week = [
+    "日",
+    "月",
+    "火",
+    "水",
+    "木",
+    "金",
+    "土",
+  ][d.getDay()];
+
   return `${d.getMonth() + 1}/${d.getDate()}(${week})`;
 }
 
-export function toHomeMemory(row: MemoryRecord): SampleMemory {
-  const animalId = MEMORY_ANIMAL_MAP[row.animal_id] ?? DEFAULT_ANIMAL_ID;
+export function toHomeMemory(
+  row: MemoryRecord,
+): SampleMemory {
+  const animalId = isMemoryAnimalId(row.animal_id)
+    ? MEMORY_ANIMAL_MAP[row.animal_id]
+    : DEFAULT_ANIMAL_ID;
+
   const diaryText = row.diary_text.trim();
 
   return {
@@ -55,16 +92,24 @@ export function toHomeMemory(row: MemoryRecord): SampleMemory {
     date: formatMemoryListDate(row.created_at),
     animalId,
     preview: diaryText,
-    listTitle: diaryText.length > 18 ? `${diaryText.slice(0, 18)}...` : diaryText,
-    tags: [row.emotion, MEMORY_EMOTION_LABEL[animalId]],
+    listTitle:
+      diaryText.length > 18
+        ? `${diaryText.slice(0, 18)}...`
+        : diaryText,
+    tags: [
+      row.emotion,
+      MEMORY_EMOTION_LABEL[animalId],
+    ],
     imageUrl: row.image_url,
     meta: "",
   };
 }
 
-export function toAlbumMemory(row: MemoryRecord): MemoryAlbumItem {
-  const animalId = ["lion", "rabbit", "cat", "bear", "fox"].includes(row.animal_id)
-    ? (row.animal_id as MemoryAnimalId)
+export function toAlbumMemory(
+  row: MemoryRecord,
+): MemoryAlbumItem {
+  const animalId = isMemoryAnimalId(row.animal_id)
+    ? row.animal_id
     : "cat";
 
   return {

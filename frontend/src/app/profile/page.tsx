@@ -21,7 +21,7 @@ import {
   Star,
   type LucideIcon,
 } from "lucide-react";
-import { useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
 import { MoodAnimal } from "@/components/mood-animal";
 import {
   DottedDivider,
@@ -32,14 +32,108 @@ import {
   WashiTape,
 } from "@/components/notebook-shell";
 import { Toggle } from "@/components/profile/toggle";
-import { DEFAULT_ROADMAP_HREF } from "@/lib/app-paths";
 import { fileToAvatarDataUrl } from "@/lib/avatar-image";
 import { useProfile } from "@/lib/hooks/use-profile";
-import { getAnimal } from "@/lib/mood";
+import { ANIMALS, getAnimal, type AnimalId } from "@/lib/mood";
+import { MEMORY_ANIMAL_MAP, type MemoryAnimalId, type MemoryRecord } from "@/lib/memory-records";
 import { transitions } from "@/lib/motion";
+import { tanzakuApi, type TanzakuWish } from "@/lib/api/tanzaku";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
+// Supabaseのmemoriesテーブルから取得する、感情集計に必要な列の型。
+type EmotionSummaryRow = {
+  id: number;
+  animal_id: string;
+  emotion: string | null;
+  created_at: string;
+};
+
+type EmotionSummaryItem = {
+  animalId: AnimalId;
+  label: string;
+  emoji: string;
+  accent: string;
+  count: number;
+  percent: number;
+  latestMemoryId: number | null;
+  topEmotion: string;
+};
+
+const MEMORY_ANIMAL_IDS = Object.keys(MEMORY_ANIMAL_MAP) as MemoryAnimalId[];
+
+// DBから受け取った文字列が、アプリで扱える動物IDかを判定する型ガード。
+function isMemoryAnimalId(value: string): value is MemoryAnimalId {
+  return MEMORY_ANIMAL_IDS.includes(value as MemoryAnimalId);
+}
+
+function buildEmotionSummary(rows: EmotionSummaryRow[]): EmotionSummaryItem[] {
+  // 未知のanimal_idが入っていた場合は集計対象から除外する。
+  const validRows = rows.filter((row) => isMemoryAnimalId(row.animal_id));
+  // 動物ごとに件数・最新の日記・感情別件数を一時的にまとめる。
+  const grouped = new Map<
+    AnimalId,
+    {
+      count: number;
+      latestMemoryId: number | null;
+      latestCreatedAt: number;
+      emotionCounts: Map<string, number>;
+    }
+  >();
+
+  for (const row of validRows) {
+    // memories側の動物IDを、画面表示で使うAnimalIdへ変換する。
+    const animalId = MEMORY_ANIMAL_MAP[row.animal_id as MemoryAnimalId];
+    const createdAt = new Date(row.created_at).getTime();
+    const current = grouped.get(animalId) ?? {
+      count: 0,
+      latestMemoryId: null,
+      latestCreatedAt: Number.NEGATIVE_INFINITY,
+      emotionCounts: new Map<string, number>(),
+    };
+
+    current.count += 1;
+    // この動物に該当する最新の日記IDを保持し、カード画面へのリンクに使う。
+    if (!Number.isNaN(createdAt) && createdAt > current.latestCreatedAt) {
+      current.latestCreatedAt = createdAt;
+      current.latestMemoryId = row.id;
+    }
+
+    const emotion = row.emotion?.trim();
+
+    // 空文字は数えず、同じ感情名が何回登場したかを記録する。
+    if (emotion) {
+      current.emotionCounts.set(emotion, (current.emotionCounts.get(emotion) ?? 0) + 1);
+    }
+
+    grouped.set(animalId, current);
+  }
+
+  // すべての動物を表示対象にし、未登場の動物も0件として返す。
+  return ANIMALS.map((animal) => {
+    const entry = grouped.get(animal.id);
+    const topEmotion =
+      entry && entry.emotionCounts.size > 0
+        ? Array.from(entry.emotionCounts.entries()).sort((a, b) => b[1] - a[1])[0][0]
+        : animal.label;
+
+    return {
+      animalId: animal.id,
+      label: animal.label,
+      emoji: animal.emoji,
+      accent: animal.accent,
+      count: entry?.count ?? 0,
+      percent:
+        validRows.length > 0
+          ? Math.round(((entry?.count ?? 0) / validRows.length) * 100)
+          : 0,
+      latestMemoryId: entry?.latestMemoryId ?? null,
+      topEmotion,
+    };
+  }).sort((a, b) => b.count - a.count || a.label.localeCompare(b.label, "ja"));// 件数の多い順
+}
+
+// メールアドレスの先頭1文字だけを残してマスク表示する。
 function maskEmail(email: string | null): string {
   if (!email) return "未連携";
   const [local, domain] = email.split("@");
@@ -61,7 +155,74 @@ export default function ProfilePage() {
   } = useProfile();
   const [editing, setEditing] = useState(false);
   const [draftName, setDraftName] = useState("");
-  const partner = getAnimal("free");
+  const [emotionRows, setEmotionRows] = useState<EmotionSummaryRow[]>([]);
+  const [memories, setMemories] = useState<MemoryRecord[]>([]);
+  const [activeWish, setActiveWish] = useState<TanzakuWish | null>(null);
+  const [loadingSummary, setLoadingSummary] = useState(true);
+
+  // emotionRowsが変化したときだけ再集計し、不要な計算を避ける。
+  const emotionSummary = useMemo(() => buildEmotionSummary(emotionRows), [emotionRows]);
+  const totalSummarizedMemories = useMemo(
+    () => emotionSummary.reduce((sum, item) => sum + item.count, 0),
+    [emotionSummary],
+  );
+  const topEmotions = emotionSummary.filter((item) => item.count > 0).slice(0, 3);
+  useEffect(() => {
+    // 画面遷移後に非同期処理が完了してもstateを更新しないためのフラグ。
+    let cancelled = false;
+
+    async function fetchSummary() {
+      try {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) throw userError ?? new Error("ログイン情報を確認できませんでした。");
+        const { data, error } = await supabase
+          .from("memories")
+          .select("id, image_url, diary_text, emotion, animal_id, created_at")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
+        if (cancelled) return;
+        if (error || !data) {
+          setEmotionRows([]);
+          setMemories([]);
+        } else {
+          setEmotionRows(data as EmotionSummaryRow[]);
+          setMemories(data as MemoryRecord[]);
+        }
+        try {
+          const wishes = await tanzakuApi.list("active");
+          if (!cancelled) setActiveWish(wishes.items[0] ?? null);
+        } catch {
+          // 短冊の取得失敗は、本人の思い出集計を空にしない。
+        }
+      } catch {
+        if (!cancelled) {
+          setEmotionRows([]);
+          setMemories([]);
+        }
+      } finally {
+        if (!cancelled) setLoadingSummary(false);
+      }
+    }
+
+    void fetchSummary();
+
+    return () => {
+      // コンポーネントが破棄された後のstate更新を防ぐ。
+      cancelled = true;
+    };
+  }, []);
+
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tokyo" }).format(new Date());
+  const todayMemory = memories.find(
+    (memory) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tokyo" }).format(new Date(memory.created_at)) === today,
+  );
+  const partner = todayMemory && isMemoryAnimalId(todayMemory.animal_id)
+    ? getAnimal(MEMORY_ANIMAL_MAP[todayMemory.animal_id])
+    : null;
+  const photoCount = memories.filter((memory) => Boolean(memory.image_url)).length;
+  const companionCount = new Set(memories.filter((memory) => isMemoryAnimalId(memory.animal_id)).map((memory) => MEMORY_ANIMAL_MAP[memory.animal_id as MemoryAnimalId])).size;
+  const activeWishProgress = activeWish?.steps.length ? Math.round((activeWish.steps.filter((step) => step.done).length / activeWish.steps.length) * 100) : 0;
+  const activeWishHref = activeWish ? `/roadmap/${activeWish.id}` : "/tanzaku";
 
   const containerVariants = {
     initial: {},
@@ -96,11 +257,15 @@ export default function ProfilePage() {
   }
 
   async function handleGoogleLogin() {
+    const appUrl =
+      process.env.NEXT_PUBLIC_APP_URL ??
+      (typeof window !== "undefined" ? window.location.origin : "");
+
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo:
-          typeof window !== "undefined" ? `${window.location.origin}/profile` : "/",
+        // ローカル開発中にVercel側へ戻らないよう、envで指定したアプリURLを優先する。
+        redirectTo: `${appUrl}/auth/callback?next=/profile`,
       },
     });
   }
@@ -120,7 +285,11 @@ export default function ProfilePage() {
           variants={itemVariants}
           className="mt-6 grid gap-7 md:grid-cols-[12rem_1fr] md:items-center"
         >
-          <ProfilePhoto src={profile.avatarUrl} onFileSelect={onAvatarFile} />
+          <ProfilePhoto
+            src={profile.avatarUrl}
+            partnerLabel={partner ? `${partner.label}・${partner.emoji}` : "まだ記録がありません"}
+            onFileSelect={onAvatarFile}
+          />
 
           <div className="min-w-0">
             <div className="flex min-w-0 items-start gap-3">
@@ -147,11 +316,15 @@ export default function ProfilePage() {
                 since 2026・かきかえ自由
               </span>
             </div>
-            <div className="mt-4 flex flex-wrap gap-3">
-              <Sticker tone="rose">喜び</Sticker>
-              <Sticker tone="sun">楽しい</Sticker>
-              <Sticker tone="sage">充実感</Sticker>
-            </div>
+            {topEmotions.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-3">
+                {topEmotions.map(({ label }, index) => (
+                  <Sticker key={label} tone={index === 0 ? "rose" : index === 1 ? "sun" : "sage"}>
+                    {label}
+                  </Sticker>
+                ))}
+              </div>
+            )}
           </div>
         </motion.div>
 
@@ -195,50 +368,71 @@ export default function ProfilePage() {
           <NotebookSectionTitle title="今日の相棒" icon={Sparkles} />
           <div className="grid gap-5 rounded-[1rem] border border-mono-linen/35 bg-white/45 p-5 shadow-soft ring-1 ring-white/45 md:grid-cols-[1fr_14rem] md:items-center">
             <div>
-              <h2 className="font-serif text-3xl font-semibold text-mono-ink">
-                自由っぽいネコ
-              </h2>
+              {partner && <h2 className="font-serif text-3xl font-semibold text-mono-ink">{partner.label}</h2>}
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                気まぐれに世界を歩く
+                {loadingSummary
+                  ? "思い出から相棒を探しています"
+                  : partner
+                    ? partner.tagline
+                    : "今日はまだ日記がありません。記録すると、今日の相棒が現れます。"}
               </p>
               <Link
-                href="/animal-card/default"
+                href={todayMemory ? `/animal-card/${todayMemory.id}` : "/upload"}
                 className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-primary"
               >
-                動物図鑑を見る
+                {todayMemory ? "動物カードを見る" : "日記を書く"}
                 <ChevronRight className="size-4" aria-hidden />
               </Link>
             </div>
             <div className="relative h-44">
-              <MoodAnimal
-                src={partner.glb}
-                accent={partner.accent}
-                className="absolute inset-0 h-44 w-full"
-                actionTick={0}
-              />
+              {partner ? (
+                <MoodAnimal
+                  src={partner.glb}
+                  accent={partner.accent}
+                  className="absolute inset-0 h-44 w-full"
+                  actionTick={0}
+                />
+              ) : (
+                <div className="grid h-full place-items-center text-4xl" aria-hidden>
+                  ✧
+                </div>
+              )}
             </div>
           </div>
         </motion.section>
 
         <motion.section variants={itemVariants} className="mt-6">
           <NotebookSectionTitle title="よく現れる感情" icon={PawPrint} />
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <EmotionPill icon="●" label="楽しい" tone="rose" />
-            <EmotionPill icon="✿" label="落ち着き" tone="sage" />
-            <EmotionPill icon="★" label="達成感" tone="sun" />
-            <EmotionPill icon="✦" label="ワクワク" tone="violet" />
-          </div>
+          <EmotionSummaryPanel
+            items={emotionSummary}
+            loading={loadingSummary}
+            total={totalSummarizedMemories}
+          />
           <p className="mt-3 text-[12px] text-muted-foreground">
-            AI があなたの思い出から分析した、よく現れる感情です。
+            これまでの思い出を、動物カードと見比べながら振り返れます。
           </p>
         </motion.section>
 
         <motion.section variants={itemVariants} className="mt-7">
           <NotebookSectionTitle title="あなたの記録" icon={BookOpen} />
           <div className="grid gap-3 sm:grid-cols-3">
-            <StatCard icon={BookOpen} label="思い出数" value="27" unit="件" />
-            <StatCard icon={Camera} label="写真" value="85" unit="枚" />
-            <StatCard icon={PawPrint} label="相棒発見" value="6" unit="種類" />
+            <StatCard
+              icon={BookOpen}
+              label="思い出数"
+              value={loadingSummary ? "..." : String(memories.length)}
+              unit="件"
+            />
+            <StatCard icon={Camera} label="写真" value={loadingSummary ? "..." : String(photoCount)} unit="枚" />
+            <StatCard
+              icon={PawPrint}
+              label="相棒発見"
+              value={
+                loadingSummary
+                  ? "..."
+                  : String(companionCount)
+              }
+              unit="種類"
+            />
           </div>
           <p className="mt-3 text-[12px] text-muted-foreground">
             これまでのあなたの思い出の軌跡です。
@@ -248,7 +442,7 @@ export default function ProfilePage() {
         <motion.section variants={itemVariants} className="relative mt-7">
           <WashiTape className="-top-3 left-8" />
           <Link
-            href={DEFAULT_ROADMAP_HREF}
+            href={activeWishHref}
             className="block rounded-[0.35rem] bg-[#f3d878] px-6 py-5 shadow-soft ring-1 ring-[#d4b757]/35 transition hover:-translate-y-0.5 hover:bg-[#f5de87]"
           >
             <div className="flex items-center gap-2">
@@ -258,14 +452,25 @@ export default function ProfilePage() {
               </h2>
             </div>
             <DottedDivider className="my-4 opacity-70" />
-            <p className="text-lg font-semibold text-mono-ink">温泉旅行へ行く</p>
-            <div className="mt-4 flex items-center gap-4">
-              <span className="text-sm text-mono-ink/75">達成率</span>
-              <span className="h-3 w-40 overflow-hidden rounded-full bg-white/70 ring-1 ring-mono-ink/10">
-                <span className="block h-full w-[65%] rounded-full bg-primary" />
-              </span>
-              <span className="font-semibold tabular-nums text-mono-ink">65%</span>
-            </div>
+            {activeWish ? (
+              <>
+                <p className="text-lg font-semibold text-mono-ink">{activeWish.dream}</p>
+                <div className="mt-4 flex items-center gap-4">
+                  <span className="text-sm text-mono-ink/75">達成率</span>
+                  <span className="h-3 w-40 overflow-hidden rounded-full bg-white/70 ring-1 ring-mono-ink/10">
+                    <span
+                      className="block h-full rounded-full bg-primary"
+                      style={{ width: `${activeWishProgress}%` }}
+                    />
+                  </span>
+                  <span className="font-semibold tabular-nums text-mono-ink">{activeWishProgress}%</span>
+                </div>
+              </>
+            ) : (
+              <p className="text-lg font-semibold text-mono-ink">
+                {loadingSummary ? "夢を読み込んでいます…" : "次の夢を短冊に書いてみよう"}
+              </p>
+            )}
           </Link>
         </motion.section>
 
@@ -353,9 +558,11 @@ export default function ProfilePage() {
 
 function ProfilePhoto({
   src,
+  partnerLabel,
   onFileSelect,
 }: {
   src: string | null;
+  partnerLabel: string;
   onFileSelect: (file: File) => void;
 }) {
   const inputId = useId();
@@ -397,7 +604,7 @@ function ProfilePhoto({
           )}
         </span>
         <span className="mt-3 block truncate text-center text-sm text-mono-ink/75">
-          自由っぽい・ネコ
+          {partnerLabel}
         </span>
       </label>
     </div>
@@ -433,30 +640,98 @@ function Sticker({ tone, children }: { tone: "rose" | "sun" | "sage"; children: 
   );
 }
 
-function EmotionPill({
-  icon,
-  label,
-  tone,
+function EmotionSummaryPanel({
+  items,
+  loading,
+  total,
 }: {
-  icon: string;
-  label: string;
-  tone: "rose" | "sage" | "sun" | "violet";
+  items: EmotionSummaryItem[];
+  loading: boolean;
+  total: number;
 }) {
+  if (loading) {
+    return (
+      <div className="rounded-[1rem] bg-white/50 px-5 py-6 text-sm text-muted-foreground shadow-ambient ring-1 ring-mono-ink/6">
+        感情の割合を集計しています...
+      </div>
+    );
+  }
+
+  if (total === 0) {
+    return (
+      <div className="rounded-[1rem] bg-white/50 px-5 py-6 shadow-ambient ring-1 ring-mono-ink/6">
+        <p className="text-sm font-semibold text-mono-ink">まだ集計できる日記がありません。</p>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          写真とひとことを残すと、感情の割合と相棒の傾向がここに表示されます。
+        </p>
+        <Link
+          href="/upload"
+          className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-[12px] font-semibold text-primary-foreground shadow-soft"
+        >
+          日記を書く
+          <ChevronRight className="size-3" aria-hidden />
+        </Link>
+      </div>
+    );
+  }
+
+  const top = items.find((item) => item.count > 0);
+
   return (
-    <div className="flex min-h-16 items-center justify-center gap-3 rounded-[0.9rem] bg-white/50 px-4 py-3 shadow-ambient ring-1 ring-mono-ink/6">
-      <span
-        className={cn(
-          "text-xl",
-          tone === "rose" && "text-[#d98fa2]",
-          tone === "sage" && "text-mono-sage",
-          tone === "sun" && "text-[#e8bd42]",
-          tone === "violet" && "text-[#b8a5d8]",
-        )}
-        aria-hidden
-      >
-        {icon}
-      </span>
-      <span className="text-sm font-semibold text-mono-ink">{label}</span>
+    <div className="rounded-[1rem] bg-white/50 p-4 shadow-ambient ring-1 ring-mono-ink/6 sm:p-5">
+      {top && (
+        <div className="mb-4 rounded-[0.8rem] bg-white/55 px-4 py-3 ring-1 ring-mono-ink/6">
+          <p className="text-[12px] font-semibold tracking-[0.08em] text-muted-foreground">
+            いちばん多い感情
+          </p>
+          <p className="mt-1 text-base font-semibold text-mono-ink">
+            {top.emoji} {top.label}が {top.percent}%。最近は「{top.topEmotion}」の気配が強めです。
+          </p>
+        </div>
+      )}
+      <div className="space-y-3">
+        {items.map((item) => {
+          const content = (
+            <div className="grid gap-2 rounded-[0.8rem] bg-white/45 px-4 py-3 ring-1 ring-mono-ink/6 transition hover:bg-white/65 sm:grid-cols-[8.5rem_1fr_4rem] sm:items-center">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="text-xl" aria-hidden>
+                  {item.emoji}
+                </span>
+                <span className="min-w-0 truncate text-sm font-semibold text-mono-ink">
+                  {item.label}
+                </span>
+              </div>
+              <div className="h-2.5 overflow-hidden rounded-full bg-mono-linen/35">
+                <span
+                  className="block h-full rounded-full transition-[width]"
+                  style={{ width: `${item.percent}%`, background: item.accent }}
+                />
+              </div>
+              <div className="flex items-baseline justify-between gap-2 text-right sm:block">
+                <span className="text-[12px] text-muted-foreground sm:hidden">{item.count}件</span>
+                <span className="font-serif text-xl font-bold tabular-nums text-mono-ink">
+                  {item.percent}
+                  <span className="ml-0.5 text-[12px] font-semibold">%</span>
+                </span>
+              </div>
+            </div>
+          );
+
+          if (item.latestMemoryId) {
+            return (
+              <Link key={item.animalId} href={`/animal-card/${item.latestMemoryId}`} className="block">
+                {content}
+              </Link>
+            );
+          }
+
+          return (
+            <div key={item.animalId} className="opacity-45">
+              {content}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
