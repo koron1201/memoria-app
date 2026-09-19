@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { flushSync } from "react-dom";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,6 +19,11 @@ const ANALYSIS_STEPS = ["写真を読む", "気持ちを拾う", "言葉を整�
 const ANALYSIS_PROGRESS_MAX = 95;
 const ANALYSIS_PROGRESS_TIME_CONSTANT_MS = 5_000;
 
+const waitForPaint = () =>
+  new Promise<void>((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+  });
+
 export default function UploadPage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -28,6 +34,7 @@ export default function UploadPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [progressPct, setProgressPct] = useState(0);
+  const isAnalysisCompleteRef = useRef(false);
 
   useEffect(() => {
     if (!isAnalyzing) {
@@ -40,6 +47,8 @@ export default function UploadPage() {
     const startedAt = performance.now();
 
     const progressTimer = setInterval(() => {
+      if (isAnalysisCompleteRef.current) return;
+
       const elapsed = performance.now() - startedAt;
       const progress = Math.min(
         ANALYSIS_PROGRESS_MAX,
@@ -95,6 +104,7 @@ export default function UploadPage() {
       return;
     }
 
+    isAnalysisCompleteRef.current = false;
     setIsAnalyzing(true);
 
     try {
@@ -126,8 +136,12 @@ export default function UploadPage() {
       }
 
       const result = await res.json();
-      setProgressPct(100);
-      setStepIndex(ANALYSIS_STEPS.length - 1);
+      isAnalysisCompleteRef.current = true;
+      flushSync(() => {
+        setProgressPct(100);
+        setStepIndex(ANALYSIS_STEPS.length - 1);
+      });
+      await waitForPaint();
 
       localStorage.setItem(APP_LS.lastAnalysis, JSON.stringify(result));
       if (previewUrl) localStorage.setItem(APP_LS.lastImage, previewUrl);
