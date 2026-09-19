@@ -161,6 +161,7 @@ export function WashiTape({
 }
 
 export function NotebookSideTabs({ active }: { active: keyof typeof notebookTabs }) {
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const tabs: NotebookTab[] = [
     { ...notebookTabs.home, active: active === "home" },
     { ...notebookTabs.memory, active: active === "memory" },
