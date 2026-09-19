@@ -24,7 +24,6 @@ export interface NotificationPrefs {
 
 const PROFILE_KEY = APP_LS.profile;
 const NOTIF_KEY = APP_LS.notifications;
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 export const defaultProfile: UserProfile = {
   displayName: "ゲストユーザー",
