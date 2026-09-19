@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { BookOpen, Grid2X2, Home, Star, UserRound, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -158,6 +161,7 @@ export function WashiTape({
 }
 
 export function NotebookSideTabs({ active }: { active: keyof typeof notebookTabs }) {
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const tabs: NotebookTab[] = [
     { ...notebookTabs.home, active: active === "home" },
     { ...notebookTabs.memory, active: active === "memory" },
@@ -168,16 +172,27 @@ export function NotebookSideTabs({ active }: { active: keyof typeof notebookTabs
   return (
     <nav
       aria-label="ノートインデックス"
-      className="group absolute right-0 top-0 z-20 h-12 w-11 overflow-hidden rounded-bl-[0.75rem] rounded-tl-[0.75rem] border border-r-0 border-mono-linen/40 bg-mono-cream/80 shadow-soft ring-1 ring-white/50 transition-[height,width] duration-200 ease-out hover:h-[18.6rem] hover:w-20 focus-within:h-[18.6rem] focus-within:w-20 min-[760px]:w-5"
+      className={cn(
+        "group absolute right-0 top-0 z-20 overflow-hidden rounded-bl-[0.75rem] rounded-tl-[0.75rem] border border-r-0 border-mono-linen/40 bg-mono-cream/80 shadow-soft ring-1 ring-white/50 transition-[height,width] duration-200 ease-out min-[760px]:h-12 min-[760px]:w-5 min-[760px]:hover:h-[18.6rem] min-[760px]:hover:w-20 min-[760px]:focus-within:h-[18.6rem] min-[760px]:focus-within:w-20",
+        isMobileOpen ? "h-[18.6rem] w-20" : "h-12 w-11",
+      )}
     >
       <button
         type="button"
-        aria-label="ノートインデックスを開く"
-        className="absolute right-0 top-0 z-30 h-12 w-11 focus:w-0 min-[760px]:hidden"
+        aria-label={isMobileOpen ? "ノートインデックスを閉じる" : "ノートインデックスを開く"}
+        aria-expanded={isMobileOpen}
+        onClick={() => setIsMobileOpen((open) => !open)}
+        className={cn(
+          "absolute right-0 top-0 z-30 h-12 w-11 touch-manipulation min-[760px]:hidden",
+          isMobileOpen && "pointer-events-none",
+        )}
       />
       <span
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-primary/88 transition-opacity duration-150 group-hover:opacity-0 group-focus-within:opacity-0"
+        className={cn(
+          "pointer-events-none absolute inset-0 bg-primary/88 transition-opacity duration-150 min-[760px]:group-hover:opacity-0 min-[760px]:group-focus-within:opacity-0",
+          isMobileOpen && "opacity-0",
+        )}
       />
       {tabs.map(({ href, label, icon: Icon, active: isActive }) => (
         <Link
@@ -185,7 +200,8 @@ export function NotebookSideTabs({ active }: { active: keyof typeof notebookTabs
           href={href}
           aria-current={isActive ? "page" : undefined}
           className={cn(
-            "flex h-[4.65rem] w-20 flex-col items-center justify-center gap-1.5 border-b border-mono-ink/6 px-2 text-[12px] font-semibold leading-tight opacity-0 transition last:border-b-0 group-hover:opacity-100 group-focus-within:opacity-100",
+            "flex h-[4.65rem] w-20 touch-manipulation flex-col items-center justify-center gap-1.5 border-b border-mono-ink/6 px-2 text-[12px] font-semibold leading-tight transition last:border-b-0 min-[760px]:opacity-0 min-[760px]:group-hover:opacity-100 min-[760px]:group-focus-within:opacity-100",
+            isMobileOpen ? "opacity-100" : "pointer-events-none opacity-0 min-[760px]:pointer-events-auto",
             isActive
               ? "bg-primary text-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.28)]"
               : "bg-[#fffdf6]/92 text-mono-ink/78 hover:bg-white hover:text-mono-ink",
