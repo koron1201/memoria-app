@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { BookOpen, Grid2X2, Home, Star, UserRound, type LucideIcon } from "lucide-react";
+import { BookOpen, Grid2X2, Home, PenLine, Star, UserRound, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type NotebookTab = {
@@ -10,6 +10,7 @@ type NotebookTab = {
   label: string;
   icon: LucideIcon;
   active: boolean;
+  mobileOnly?: boolean;
 };
 
 export const notebookTabs = {
@@ -17,6 +18,7 @@ export const notebookTabs = {
   memory: { href: "/memory", label: "思い出", icon: Grid2X2 },
   tanzaku: { href: "/tanzaku", label: "夢", icon: Star },
   profile: { href: "/profile", label: "マイページ", icon: UserRound },
+  record: { href: "/upload", label: "日記を書く", icon: PenLine },
 } as const;
 
 export function NotebookSheet({
@@ -167,6 +169,7 @@ export function NotebookSideTabs({ active }: { active: keyof typeof notebookTabs
     { ...notebookTabs.memory, active: active === "memory" },
     { ...notebookTabs.tanzaku, active: active === "tanzaku" },
     { ...notebookTabs.profile, active: active === "profile" },
+    { ...notebookTabs.record, active: active === "record", mobileOnly: true },
   ];
 
   return (
@@ -174,7 +177,7 @@ export function NotebookSideTabs({ active }: { active: keyof typeof notebookTabs
       aria-label="ノートインデックス"
       className={cn(
         "group absolute right-0 top-0 z-20 overflow-hidden rounded-bl-[0.75rem] rounded-tl-[0.75rem] border border-r-0 border-mono-linen/40 bg-mono-cream/80 shadow-soft ring-1 ring-white/50 transition-[height,width] duration-200 ease-out min-[760px]:h-12 min-[760px]:w-5 min-[760px]:hover:h-[18.6rem] min-[760px]:hover:w-20 min-[760px]:focus-within:h-[18.6rem] min-[760px]:focus-within:w-20",
-        isMobileOpen ? "h-[18.6rem] w-20" : "h-12 w-11",
+        isMobileOpen ? "h-[23.25rem] w-20" : "h-12 w-11",
       )}
     >
       <button
@@ -194,13 +197,14 @@ export function NotebookSideTabs({ active }: { active: keyof typeof notebookTabs
           isMobileOpen && "opacity-0",
         )}
       />
-      {tabs.map(({ href, label, icon: Icon, active: isActive }) => (
+      {tabs.map(({ href, label, icon: Icon, active: isActive, mobileOnly }) => (
         <Link
           key={href}
           href={href}
           aria-current={isActive ? "page" : undefined}
           className={cn(
             "flex h-[4.65rem] w-20 touch-manipulation flex-col items-center justify-center gap-1.5 border-b border-mono-ink/6 px-2 text-[12px] font-semibold leading-tight transition last:border-b-0 min-[760px]:opacity-0 min-[760px]:group-hover:opacity-100 min-[760px]:group-focus-within:opacity-100",
+            mobileOnly && "min-[760px]:hidden",
             isMobileOpen ? "opacity-100" : "pointer-events-none opacity-0 min-[760px]:pointer-events-auto",
             isActive
               ? "bg-primary text-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.28)]"
